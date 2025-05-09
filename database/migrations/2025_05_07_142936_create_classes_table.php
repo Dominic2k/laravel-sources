@@ -13,13 +13,13 @@ return new class extends Migration
     {
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
-            $table->string('class_name');
-            $table->enum('semester', ['1','2','3','4','5','6']);
+            $table->string('class_name', 100);
+            $table->enum('semester', ['1', '2', '3', '4', '5', '6']);
             $table->date('start_date');
             $table->date('end_date');
             $table->enum('status', ['planning', 'ongoing', 'completed']);
-            $table->timestamps();
-        });
+            $table->timestamp('created_at')->useCurrent();  
+    });
     }
 
     /**
