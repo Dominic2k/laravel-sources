@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ClassSubjectController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\SelfStudyPlanController;
 
 // Public API resources
 Route::apiResource('goals', GoalController::class);
@@ -20,6 +21,7 @@ Route::apiResource('students', StudentController::class)->only(['index', 'show']
 Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
 Route::apiResource('users', UserController::class)->only(['index', 'show']);
 Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+Route::apiResource('self-study-plans', SelfStudyPlanController::class);
 
 // Public API to get student classes
 Route::get('/public/student/{id}/classes', function ($id) {
@@ -129,7 +131,8 @@ Route::put('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\Goa
 // API to delete a goal
 Route::delete('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'deleteGoal']);
 
-
+// API mở rộng: lọc theo class_name
+Route::get('self-study-plans/class/{className}',[App\Http\Controllers\Api\SelfStudyPlanController::class,'filterByClass']);
 
 
 
