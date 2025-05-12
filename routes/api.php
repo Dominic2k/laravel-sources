@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\StudentClassController;
 use App\Http\Controllers\Api\ClassController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ClassSubjectController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\InClassPlanController;
 
 // Public API resources
 Route::apiResource('goals', GoalController::class);
@@ -131,7 +131,15 @@ Route::put('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\Goa
 // API to delete a goal
 Route::delete('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'deleteGoal']);
 
+////
+// Lấy thông tin profile của sinh viên
+Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
 
+// Cập nhật thông tin profile của sinh viên
+Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
+
+
+Route::apiResource('in-class-plans', InClassPlanController::class);
 
 
 
