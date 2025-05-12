@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ClassSubjectController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\InClassPlanController;
 
 // Public API resources
 Route::apiResource('goals', GoalController::class);
@@ -134,6 +135,9 @@ Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
 
 // Cập nhật thông tin profile của sinh viên
 Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
+
+
+Route::apiResource('in-class-plans', InClassPlanController::class);
 
 
 
