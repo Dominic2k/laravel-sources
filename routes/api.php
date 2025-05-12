@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ClassSubjectController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\InClassPlanController;
 
 // Public API resources
 Route::apiResource('goals', GoalController::class);
@@ -130,6 +131,9 @@ Route::put('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\Goa
 Route::delete('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'deleteGoal']);
 
 
+
+
+Route::apiResource('in-class-plans', InClassPlanController::class);
 
 
 

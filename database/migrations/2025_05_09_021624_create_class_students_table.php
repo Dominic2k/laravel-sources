@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('class_students', function (Blueprint $table) {
-        $table->unsignedInteger('class_id');
+        $table->unsignedBigInteger('class_id');
         $table->unsignedBigInteger('student_id');
         $table->timestamp('created_at')->useCurrent();
         $table->primary(['class_id', 'student_id']);
@@ -29,3 +29,4 @@ return new class extends Migration
         Schema::dropIfExists('class_students');
     }
 };
++
