@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('self_study_plans', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('goal_id'); 
             $table->string('class_name');
             $table->date('date');
             $table->string('lesson');
@@ -24,6 +25,8 @@ return new class extends Migration
             $table->text('evaluation')->nullable();
             $table->text('reinforcing')->nullable();
             $table->timestamps();
+
+            $table->foreign('goal_id')->references('id')->on('goals')->onDelete('cascade');
         });
     }
 
