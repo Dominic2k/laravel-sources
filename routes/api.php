@@ -49,8 +49,8 @@ Route::get('/public/student/{id}/classes', function ($id) {
 });
 
 // Auth routes
-Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
+// Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+// Route::middleware('auth:sanctum')->post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
 
 // Các routes cần authentication
 Route::middleware('auth:sanctum')->group(function () {
@@ -122,6 +122,8 @@ Route::get('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\Goa
 
 // API to create a new goal for a subject
 Route::post('/student/{student_id}/subject/{class_subject_id}/goals', [App\Http\Controllers\Api\GoalController::class, 'createGoalForSubject']);
+
+
 
 // API to update a goal
 Route::put('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'updateGoal']);
