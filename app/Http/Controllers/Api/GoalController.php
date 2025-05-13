@@ -2,57 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\Goal;
-use App\Models\Student;
-use App\Models\ClassSubject;
+use Illuminate\Http\Request;
+use App\Services\GoalService;
+use Illuminate\Validation\ValidationException;
 
 class GoalController extends Controller
 {
-    public function index()
-    {
-        return Goal::with(['student', 'classSubject'])->get();
-    }
+    protected $goalService;
 
-    public function store(Request $request)
+    /**
+     * Khởi tạo controller với service
+     *
+     * @param GoalService $goalService
+     */
+    public function __construct(GoalService $goalService)
     {
-        $data = $request->validate([
-            'student_id' => 'required|exists:students,user_id',
-            'class_subject_id' => 'required|exists:class_subjects,id',
-            'title' => 'required|string',
-            'description' => 'nullable|string',
-            'goal_type' => 'required|in:weekly,monthly,semester,custom',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'status' => 'required|in:not_started,in_progress,completed,failed,archived',
-            'priority' => 'required|in:low,medium,high,critical',
-            'is_private' => 'boolean'
-        ]);
-
-        return Goal::create($data);
-    }
-
-    public function show($id)
-    {
-        return Goal::with(['student', 'classSubject'])->findOrFail($id);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $goal = Goal::findOrFail($id);
-        $goal->update($request->all());
-        return $goal;
-    }
-
-    public function destroy($id)
-    {
-        Goal::destroy($id);
-        return response()->json(['message' => 'Deleted']);
+        $this->goalService = $goalService;
     }
 
     /**
-     * Get goals by student and class subject
+     * Lấy danh sách goals theo sinh viên và môn học
      *
      * @param int $studentId
      * @param int $classSubjectId
@@ -61,41 +31,15 @@ class GoalController extends Controller
     public function getGoalsBySubject($studentId, $classSubjectId)
     {
         try {
-            // Kiểm tra xem student có tồn tại không
-            $student = \App\Models\Student::where('user_id', $studentId)->first();
-            
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
-            }
-            
-            // Kiểm tra xem class_subject có tồn tại không
-            $classSubject = \App\Models\ClassSubject::find($classSubjectId);
-            
-            if (!$classSubject) {
-                return response()->json(['error' => 'Class subject not found'], 404);
-            }
-            
-            // Lấy danh sách goals của môn học đó
-            $goals = Goal::where('student_id', $studentId)
-                ->where('class_subject_id', $classSubjectId)
-                ->with(['student', 'classSubject'])
-                ->get();
-                
-            return response()->json([
-                'success' => true,
-                'data' => $goals
-            ]);
+            $result = $this->goalService->getGoalsBySubject($studentId, $classSubjectId);
+            return response()->json($result);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
+            return $this->handleException($e);
         }
     }
 
     /**
-     * Get goal detail
+     * Lấy chi tiết goal
      *
      * @param int $studentId
      * @param int $goalId
@@ -104,40 +48,17 @@ class GoalController extends Controller
     public function getGoalDetail($studentId, $goalId)
     {
         try {
-            // Kiểm tra xem student có tồn tại không
-            $student = \App\Models\Student::where('user_id', $studentId)->first();
-            
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
-            }
-            
-            // Lấy chi tiết goal
-            $goal = Goal::where('id', $goalId)
-                ->where('student_id', $studentId)
-                ->with(['student', 'classSubject.subject', 'classSubject.class', 'classSubject.teacher.user'])
-                ->first();
-                
-            if (!$goal) {
-                return response()->json(['error' => 'Goal not found or not authorized'], 404);
-            }
-            
-            return response()->json([
-                'success' => true,
-                'data' => $goal
-            ]);
+            $result = $this->goalService->getGoalDetail($studentId, $goalId);
+            return response()->json($result);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
+            return $this->handleException($e);
         }
     }
 
     /**
-     * Create a new goal for a subject
+     * Tạo goal mới
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @param int $studentId
      * @param int $classSubjectId
      * @return \Illuminate\Http\JsonResponse
@@ -145,57 +66,17 @@ class GoalController extends Controller
     public function createGoalForSubject(Request $request, $studentId, $classSubjectId)
     {
         try {
-            // Kiểm tra xem student có tồn tại không
-            $student = \App\Models\Student::where('user_id', $studentId)->first();
-            
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
-            }
-            
-            // Kiểm tra xem class_subject có tồn tại không
-            $classSubject = \App\Models\ClassSubject::find($classSubjectId);
-            
-            if (!$classSubject) {
-                return response()->json(['error' => 'Class subject not found'], 404);
-            }
-            
-            // Validate dữ liệu đầu vào
-            $data = $request->validate([
-                'title' => 'required|string',
-                'description' => 'nullable|string',
-                'goal_type' => 'required|in:weekly,monthly,semester,custom',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-                'status' => 'required|in:not_started,in_progress,completed,failed,archived',
-                'priority' => 'required|in:low,medium,high,critical',
-                'is_private' => 'boolean'
-            ]);
-            
-            // Thêm student_id và class_subject_id vào dữ liệu
-            $data['student_id'] = $studentId;
-            $data['class_subject_id'] = $classSubjectId;
-            
-            // Tạo goal mới
-            $goal = Goal::create($data);
-            $goal->load(['student', 'classSubject']);
-            
-            return response()->json([
-                'success' => true,
-                'data' => $goal
-            ], 201);
+            $result = $this->goalService->createGoal($request, $studentId, $classSubjectId);
+            return response()->json($result, 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
+            return $this->handleException($e);
         }
     }
 
     /**
-     * Update a goal
+     * Cập nhật goal
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      * @param int $studentId
      * @param int $goalId
      * @return \Illuminate\Http\JsonResponse
@@ -203,53 +84,15 @@ class GoalController extends Controller
     public function updateGoal(Request $request, $studentId, $goalId)
     {
         try {
-            // Kiểm tra xem student có tồn tại không
-            $student = \App\Models\Student::where('user_id', $studentId)->first();
-            
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
-            }
-            
-            // Lấy goal cần cập nhật
-            $goal = Goal::where('id', $goalId)
-                ->where('student_id', $studentId)
-                ->first();
-                
-            if (!$goal) {
-                return response()->json(['error' => 'Goal not found or not authorized'], 404);
-            }
-            
-            // Validate dữ liệu đầu vào
-            $data = $request->validate([
-                'title' => 'sometimes|string',
-                'description' => 'nullable|string',
-                'goal_type' => 'sometimes|in:weekly,monthly,semester,custom',
-                'start_date' => 'sometimes|date',
-                'end_date' => 'sometimes|date|after_or_equal:start_date',
-                'status' => 'sometimes|in:not_started,in_progress,completed,failed,archived',
-                'priority' => 'sometimes|in:low,medium,high,critical',
-                'is_private' => 'boolean'
-            ]);
-            
-            // Cập nhật goal
-            $goal->update($data);
-            $goal->load(['student', 'classSubject']);
-            
-            return response()->json([
-                'success' => true,
-                'data' => $goal
-            ]);
+            $result = $this->goalService->updateGoal($request, $studentId, $goalId);
+            return response()->json($result);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
+            return $this->handleException($e);
         }
     }
 
     /**
-     * Delete a goal
+     * Xóa goal
      *
      * @param int $studentId
      * @param int $goalId
@@ -258,40 +101,37 @@ class GoalController extends Controller
     public function deleteGoal($studentId, $goalId)
     {
         try {
-            // Kiểm tra xem student có tồn tại không
-            $student = \App\Models\Student::where('user_id', $studentId)->first();
-            
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
-            }
-            
-            // Lấy goal cần xóa
-            $goal = Goal::where('id', $goalId)
-                ->where('student_id', $studentId)
-                ->first();
-                
-            if (!$goal) {
-                return response()->json(['error' => 'Goal not found or not authorized'], 404);
-            }
-            
-            // Xóa goal
-            $goal->delete();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Goal deleted successfully'
-            ]);
+            $result = $this->goalService->deleteGoal($studentId, $goalId);
+            return response()->json($result);
         } catch (\Exception $e) {
-            return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ], 500);
+            return $this->handleException($e);
         }
     }
+
+    /**
+     * Xử lý exception
+     *
+     * @param \Exception $e
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function handleException(\Exception $e)
+    {
+        if ($e instanceof ValidationException) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors()
+            ], 422);
+        }
+
+        $statusCode = method_exists($e, 'getCode') && $e->getCode() >= 400 && $e->getCode() < 600 
+            ? $e->getCode() 
+            : 500;
+
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ], $statusCode);
+    }
 }
-
-
-
-
-
