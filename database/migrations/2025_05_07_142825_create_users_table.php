@@ -13,14 +13,17 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('username', 50)->unique();
             $table->string('password');
+            $table->string('id')
             $table->string('email', 100)->unique();
             $table->string('full_name', 100);
             $table->date('birthday')->nullable();
             $table->timestamp('last_login')->nullable();
             $table->timestamps();
         });
+
+            $table->foreign('student_id')->references('user_id')->on('students')->onDelete('cascade');
+
     }
 
     /**
