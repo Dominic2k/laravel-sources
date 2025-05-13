@@ -10,7 +10,8 @@ use App\Http\Controllers\Api\{
     ClassSubjectController,
     StudentController,
     UserController,
-    InClassPlanController
+    InClassPlanController,
+    SelfStudyPlanController
 };
 
 // --- Public API ---
@@ -22,13 +23,14 @@ Route::prefix('public')->group(function () {
     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
     Route::apiResource('users', UserController::class)->only(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+    Route::apiResource('self-study-plans', SelfStudyPlanController::class);
 
     // Lấy danh sách lớp học cho student qua user_id
     Route::get('student/{user_id}/classes', function ($userId) {
         $student = \App\Models\Student::where('user_id', $userId)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $userId)
+        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->select('classes.*')
             ->get();
@@ -41,7 +43,7 @@ Route::prefix('public')->group(function () {
         $student = \App\Models\Student::where('user_id', $userId)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $userId)
+        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
             ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
@@ -72,6 +74,9 @@ Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']
 
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
+
+// API mở rộng: lọc theo class_name
+Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
 
 // --- Student Goals (Public) ---
 Route::prefix('student/{student_id}')
