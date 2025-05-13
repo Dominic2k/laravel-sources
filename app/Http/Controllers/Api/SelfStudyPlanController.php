@@ -82,9 +82,12 @@ class SelfStudyPlanController extends Controller
         return response()->json(['message' => 'Deleted successfully']);
     }
 
-    public function filterByClass($className)
+    public function filterByGoal($goalId)
     {
-        $plans = SelfStudyPlan::where('class_name', $className)->orderBy('date', 'desc')->get();
+        $plans = SelfStudyPlan::where('goal_id', $goalId)
+            ->orderBy('date', 'desc')
+            ->get();
+
         return response()->json($plans);
     }
 }

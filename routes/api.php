@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\StudentClassController;
 use App\Http\Controllers\Api\ClassController;
@@ -11,6 +10,7 @@ use App\Http\Controllers\Api\TeacherController;
 use App\Http\Controllers\Api\ClassSubjectController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\InClassPlanController;
 use App\Http\Controllers\Api\SelfStudyPlanController;
 
 // Public API resources
@@ -51,8 +51,8 @@ Route::get('/public/student/{id}/classes', function ($id) {
 });
 
 // Auth routes
-Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
+// Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
+// Route::middleware('auth:sanctum')->post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
 
 // Các routes cần authentication
 Route::middleware('auth:sanctum')->group(function () {
@@ -125,14 +125,26 @@ Route::get('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\Goa
 // API to create a new goal for a subject
 Route::post('/student/{student_id}/subject/{class_subject_id}/goals', [App\Http\Controllers\Api\GoalController::class, 'createGoalForSubject']);
 
+
+
 // API to update a goal
 Route::put('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'updateGoal']);
 
 // API to delete a goal
 Route::delete('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'deleteGoal']);
 
+////
+// Lấy thông tin profile của sinh viên
+Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
+
+// Cập nhật thông tin profile của sinh viên
+Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
+
+
+Route::apiResource('in-class-plans', InClassPlanController::class);
+
 // API mở rộng: lọc theo class_name
-Route::get('self-study-plans/class/{className}',[App\Http\Controllers\Api\SelfStudyPlanController::class,'filterByClass']);
+Route::get('self-study-plans/goal/{goalId}',[App\Http\Controllers\Api\SelfStudyPlanController::class,'filterByClass']);
 
 
 
