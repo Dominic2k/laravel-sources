@@ -1,82 +1,46 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\GoalController;
-use App\Http\Controllers\Api\StudentClassController;
-use App\Http\Controllers\Api\ClassController;
-use App\Http\Controllers\Api\SubjectController;
-use App\Http\Controllers\Api\TeacherController;
-use App\Http\Controllers\Api\ClassSubjectController;
-use App\Http\Controllers\Api\StudentController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\InClassPlanController;
+use App\Http\Controllers\Api\{
+    GoalController,
+    StudentClassController,
+    ClassController,
+    SubjectController,
+    TeacherController,
+    ClassSubjectController,
+    StudentController,
+    UserController,
+    InClassPlanController
+};
 
-// Public API resources
-Route::apiResource('goals', GoalController::class);
-Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
-Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
-Route::apiResource('students', StudentController::class)->only(['index', 'show']);
-Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
-Route::apiResource('users', UserController::class)->only(['index', 'show']);
-Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+// --- Public API ---
+Route::prefix('public')->group(function () {
+    Route::apiResource('goals', GoalController::class)->only(['index', 'show']);
+    Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
+    Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
+    Route::apiResource('students', StudentController::class)->only(['index', 'show']);
+    Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
+    Route::apiResource('users', UserController::class)->only(['index', 'show']);
+    Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
 
-// Public API to get student classes
-Route::get('/public/student/{id}/classes', function ($id) {
-    try {
-        $student = \App\Models\Student::where('user_id', $id)->first();
-        
-        if (!$student) {
-            return response()->json(['error' => 'Student not found'], 404);
-        }
-        
-        $classes = \App\Models\ClassStudent::where('student_id', $id)
+    // Lấy danh sách lớp học cho student qua user_id
+    Route::get('student/{user_id}/classes', function ($userId) {
+        $student = \App\Models\Student::where('user_id', $userId)->first();
+        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+
+        $classes = \App\Models\ClassStudent::where('student_id', $userId)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->select('classes.*')
             ->get();
-            
-        return response()->json([
-            'success' => true,
-            'data' => $classes
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ], 500);
-    }
-});
 
-// Auth routes
-// Route::post('/login', [App\Http\Controllers\Api\AuthController::class, 'login']);
-// Route::middleware('auth:sanctum')->post('/logout', [App\Http\Controllers\Api\AuthController::class, 'logout']);
+        return response()->json(['success' => true, 'data' => $classes]);
+    });
 
-// Các routes cần authentication
-Route::middleware('auth:sanctum')->group(function () {
-    // Student classes endpoint
-    Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
-    
-    // Protected API resources
-    Route::apiResource('classes', ClassController::class)->except(['index', 'show']);
-    Route::apiResource('subjects', SubjectController::class)->except(['index', 'show']);
-    Route::apiResource('students', StudentController::class)->except(['index', 'show']);
-    Route::apiResource('teachers', TeacherController::class)->except(['index', 'show']);
-    Route::apiResource('users', UserController::class)->except(['index', 'show']);
-    Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
-});
-
-// API to get student classes by user ID (without authentication)
-Route::get('/student/{user_id}/classes', function ($userId) {
-    try {
-        // Kiểm tra xem student có tồn tại không
+    // Lấy danh sách lớp học kèm thông tin môn, giáo viên
+    Route::get('student/{user_id}/class-details', function ($userId) {
         $student = \App\Models\Student::where('user_id', $userId)->first();
-        
-        if (!$student) {
-            return response()->json(['error' => 'Student not found'], 404);
-        }
-        
-        // Lấy danh sách lớp học với thông tin liên quan
+        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+
         $classes = \App\Models\ClassStudent::where('student_id', $userId)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
@@ -97,56 +61,52 @@ Route::get('/student/{user_id}/classes', function ($userId) {
                 'users.full_name as teacher_name',
             ])
             ->get();
-            
-        return response()->json([
-            'success' => true,
-            'data' => $classes
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
-        ], 500);
-    }
+
+        return response()->json(['success' => true, 'data' => $classes]);
+    });
 });
 
-// API to get student subjects by user ID
-Route::get('/student/{user_id}/subjects', [App\Http\Controllers\Api\StudentController::class, 'getSubjects']);
-
-// API to get goals by student and class subject
-Route::get('/student/{student_id}/subject/{class_subject_id}/goals', [App\Http\Controllers\Api\GoalController::class, 'getGoalsBySubject']);
-
-// API to get goal detail
-Route::get('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'getGoalDetail']);
-
-// API to create a new goal for a subject
-Route::post('/student/{student_id}/subject/{class_subject_id}/goals', [App\Http\Controllers\Api\GoalController::class, 'createGoalForSubject']);
-
-
-
-// API to update a goal
-Route::put('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'updateGoal']);
-
-// API to delete a goal
-Route::delete('/student/{student_id}/goal/{goal_id}', [App\Http\Controllers\Api\GoalController::class, 'deleteGoal']);
-
-////
-// Lấy thông tin profile của sinh viên
+// --- Public: student profile ---
 Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
-
-// Cập nhật thông tin profile của sinh viên
 Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
 
-
+// --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
 
+// --- Student Goals (Public) ---
+Route::prefix('student/{student_id}')
+    ->controller(GoalController::class)
+    ->group(function () {
+        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+        Route::get('goal/{goal_id}', 'getGoalDetail');
+        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+        Route::put('goal/{goal_id}', 'updateGoal');
+        Route::delete('goal/{goal_id}', 'deleteGoal');
+    });
 
+// --- Student Subjects ---
+Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
 
+// --- Authenticated routes ---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
 
+    Route::apiResource('classes', ClassController::class)->except(['index', 'show']);
+    Route::apiResource('subjects', SubjectController::class)->except(['index', 'show']);
+    Route::apiResource('students', StudentController::class)->except(['index', 'show']);
+    Route::apiResource('teachers', TeacherController::class)->except(['index', 'show']);
+    Route::apiResource('users', UserController::class)->except(['index', 'show']);
+    Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
 
-
-
-
-
-
+    // Authenticated student-goal routes with ownership check
+    Route::prefix('student/{student_id}')
+        ->middleware('check.student.ownership')
+        ->controller(GoalController::class)
+        ->group(function () {
+            Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+            Route::get('goal/{goal_id}', 'getGoalDetail');
+            Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+            Route::put('goal/{goal_id}', 'updateGoal');
+            Route::delete('goal/{goal_id}', 'deleteGoal');
+        });
+});
