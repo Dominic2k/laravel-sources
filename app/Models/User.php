@@ -12,7 +12,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
     
     protected $fillable = [
-        'username', 'password', 'email', 'full_name', 'birthday'
+        'username', 'password', 'email', 'full_name', 'birthday', 'role'
     ];
     
     protected $hidden = [
@@ -24,10 +24,6 @@ class User extends Authenticatable
         'last_login' => 'datetime',
     ];
     
-    public function roles()
-    {
-        return $this->hasMany(UserRole::class);
-    }
     
     public function student()
     {

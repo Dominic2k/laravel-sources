@@ -9,12 +9,11 @@ use Illuminate\Support\Str;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
-class UserFactory extends Factory
+class RoleFactory extends Factory
 {
     /**
      * The current password being used by the factory.
      */
-    protected static ?string $password;
 
     /**
      * Define the model's default state.
@@ -28,7 +27,7 @@ class UserFactory extends Factory
             'email'      => $this->faker->unique()->safeEmail(),
             'full_name'  => $this->faker->name(),
             'birthday'   => $this->faker->date('Y-m-d'),
-            'role'       => $this->faker->randomElement(['teacher', 'student']),
+            'role'       => $this->faker->randomElement(['admin', 'teacher', 'student']),
         ];
     }
 

@@ -7,15 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class UserRole extends Model
 {
     public $timestamps = false;
-    protected $primaryKey = ['user_id', 'role'];
-    public $incrementing = false;
     
     protected $fillable = [
-        'user_id', 'role'
+        'role'
     ];
     
-    public function user()
+    public function users()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(User::class);
     }
 }
