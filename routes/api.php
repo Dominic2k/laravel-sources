@@ -23,7 +23,7 @@ Route::prefix('public')->group(function () {
     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
     Route::apiResource('users', UserController::class)->only(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
-    Route::apiResource('self-study-plans', SelfStudyPlanController::class);
+    Route::apiResource('self-study-plans', SelfStudyPlanController::class)->only(['index', 'show']);
 
     // Lấy danh sách lớp học cho student qua user_id
     Route::get('student/{user_id}/classes', function ($userId) {
@@ -75,8 +75,8 @@ Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
 
-// API mở rộng: lọc theo class_name
-Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
+// API mở rộng: lọc theo goal
+Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByGoal']);
 
 // --- Student Goals (Public) ---
 Route::prefix('student/{student_id}')

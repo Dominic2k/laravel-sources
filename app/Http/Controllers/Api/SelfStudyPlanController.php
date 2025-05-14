@@ -38,6 +38,7 @@ class SelfStudyPlanController extends Controller
         $plan = SelfStudyPlan::create($validated);
 
         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
+        
     }
 
     /**
