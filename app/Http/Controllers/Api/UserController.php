@@ -6,9 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+
 
 class UserController extends Controller
 {
+
+
     public function index()
     {
         $users = User::all();
@@ -38,9 +42,10 @@ class UserController extends Controller
         ], 201);
     }
     
-    public function show($id)
+    public function show(Request $request)
     {
-        $user = User::findOrFail($id);
+        $user = Auth::guard('sanctum')->user();
+        
         return response()->json([
             'success' => true,
             'data' => $user
@@ -49,7 +54,8 @@ class UserController extends Controller
     
     public function update(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        // $user = User::findOrFail($id);
+        $user = Auth::guard('sanctum')->user();
         
         $validated = $request->validate([
             'username' => 'sometimes|string|unique:users,username,' . $id,

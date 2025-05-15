@@ -11,7 +11,8 @@ use App\Http\Controllers\Api\{
     StudentController,
     UserController,
     InClassPlanController,
-    SelfStudyPlanController
+    SelfStudyPlanController,
+    AuthController
 };
 
 // --- Public API ---
@@ -93,9 +94,15 @@ Route::prefix('student/{student_id}')
 Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
 
 // --- Authenticated routes ---
+
+Route::post('login', [AuthController::class, 'login']);
+
+Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
-
+    Route::apiResource('/auth', AuthController::class);
     Route::apiResource('classes', ClassController::class)->except(['index', 'show']);
     Route::apiResource('subjects', SubjectController::class)->except(['index', 'show']);
     Route::apiResource('students', StudentController::class)->except(['index', 'show']);
@@ -103,9 +110,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class)->except(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
 
+
+
+
+
     // Authenticated student-goal routes with ownership check
     Route::prefix('student/{student_id}')
-        ->middleware('check.student.ownership')
+        ->middleware('student-account')
         ->controller(GoalController::class)
         ->group(function () {
             Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
@@ -115,3 +126,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('goal/{goal_id}', 'deleteGoal');
         });
 });
+Route::apiResource('achievements', AchievementController::class);
+
+
+
+
+
+
+
+
