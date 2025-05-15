@@ -15,7 +15,6 @@ use App\Http\Controllers\Api\{
 
 // --- Public API ---
 Route::prefix('public')->group(function () {
-    Route::apiResource('goals', GoalController::class)->only(['index', 'show']);
     Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
     Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
@@ -24,11 +23,11 @@ Route::prefix('public')->group(function () {
     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
 
     // Lấy danh sách lớp học cho student qua user_id
-    Route::get('student/{user_id}/classes', function ($userId) {
-        $student = \App\Models\Student::where('user_id', $userId)->first();
+    Route::get('student/{user_id}/classes', function ($user_id) {
+        $student = \App\Models\Student::where('user_id', $user_id)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $userId)
+        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->select('classes.*')
             ->get();
@@ -37,11 +36,11 @@ Route::prefix('public')->group(function () {
     });
 
     // Lấy danh sách lớp học kèm thông tin môn, giáo viên
-    Route::get('student/{user_id}/class-details', function ($userId) {
-        $student = \App\Models\Student::where('user_id', $userId)->first();
+    Route::get('student/{user_id}/class-details', function ($user_id) {
+        $student = \App\Models\Student::where('user_id', $user_id)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $userId)
+        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
             ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
@@ -64,6 +63,14 @@ Route::prefix('public')->group(function () {
 
         return response()->json(['success' => true, 'data' => $classes]);
     });
+
+    // Public Student Goals (nếu muốn cho phép người ngoài xem)
+    Route::prefix('student/{student_id}')
+        ->controller(GoalController::class)
+        ->group(function () {
+            Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+            Route::get('goal/{goal_id}', 'getGoalDetail');
+        });
 });
 
 // --- Public: student profile ---
@@ -72,20 +79,6 @@ Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']
 
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
-
-// --- Student Goals (Public) ---
-Route::prefix('student/{student_id}')
-    ->controller(GoalController::class)
-    ->group(function () {
-        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
-        Route::get('goal/{goal_id}', 'getGoalDetail');
-        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
-        Route::put('goal/{goal_id}', 'updateGoal');
-        Route::delete('goal/{goal_id}', 'deleteGoal');
-    });
-
-// --- Student Subjects ---
-Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
 
 // --- Authenticated routes ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -98,7 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class)->except(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
 
-    // Authenticated student-goal routes with ownership check
+    // Student goals (authenticated with ownership check)
     Route::prefix('student/{student_id}')
         ->middleware('check.student.ownership')
         ->controller(GoalController::class)
@@ -110,3 +103,6 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('goal/{goal_id}', 'deleteGoal');
         });
 });
+
+// --- Student Subjects ---
+Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);

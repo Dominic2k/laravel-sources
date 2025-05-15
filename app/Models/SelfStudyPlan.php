@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class InClassPlan extends Model
+class SelfStudyPlan extends Model
 {
     //
 }
