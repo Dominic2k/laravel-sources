@@ -11,7 +11,8 @@ use App\Http\Controllers\Api\{
     StudentController,
     UserController,
     InClassPlanController,
-    SelfStudyPlanController
+    SelfStudyPlanController,
+    AchievementController
 };
 
 // --- Public API ---
@@ -123,6 +124,15 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('goal/{goal_id}', 'deleteGoal');
         });
 });
+Route::apiResource('achievements', AchievementController::class);
+
+
+
+
+
+
+
+
 
 // --- Student Subjects ---
 Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
