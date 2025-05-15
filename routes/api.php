@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ClassSubjectController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\InClassPlanController;
+use App\Http\Controllers\Api\AchievementController;
 
 // Public API resources
 Route::apiResource('goals', GoalController::class);
@@ -139,7 +140,7 @@ Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']
 
 Route::apiResource('in-class-plans', InClassPlanController::class);
 
-
+Route::apiResource('achievements', AchievementController::class);
 
 
 
