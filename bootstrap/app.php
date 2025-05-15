@@ -12,8 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up'
     )
     ->withMiddleware(function (Middleware $middleware) {
-            $middleware->use([
-                App\Http\Middleware\RoleMiddleware::class
+        $middleware->alias([
+            'student-account' => App\Http\Middleware\RoleMiddleware::class.":student",
+            'teacher-account' => App\Http\Middleware\RoleMiddleware::class.":student",
+            'admin-account' => App\Http\Middleware\RoleMiddleware::class.":student"
         ]);
             //
     })

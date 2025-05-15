@@ -10,26 +10,31 @@ use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, ...$role)
-    {
-        // // Kiểm tra người dùng đã đăng nhập chưa và có role không
-        // if (!Auth::check()) {
-        //     return response()->json(['message' => 'Unauthorized'], 401);
-        // }
 
-        // Kiểm tra người dùng có role phù hợp hay không
-        // $user = $request->user();
-        // if ($user->hasRole($role)) {
-        // return response()->json(['message' => $next($request),], 404);
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     */
 
-            // return esponse()->json([
-            //     "user" => $request
-            // ], 500);
+    public function handle(Request $request, Closure $next, $role)    {
+        // return response()->json(['message' => $role], 406);
 
-            return $next($request);  // Nếu có quyền thì tiếp tục
-        // }
+        // kiểm tra token
+        if (!$request->bearerToken()) {
+            return response()->json(['message' => 'Token không tồn tại'], 401);
+        }
 
+        // Kiểm tra xác thực thông qua Sanctum
+        if (!Auth::guard('sanctum')->check()) {
+            return response()->json(['message' => 'Token không hợp lệ'], 401);
+        }
+
+        if (Auth::guard('sanctum')->user()->role === $role) {
+            return $next($request);
+        }
+        
         // Nếu không có quyền, trả về lỗi Unauthorized
-        // return response()->json(['message' => 'Forbidden'], 403);
+        return response()->json(['message' => 'Forbidden'], 403);
     }
 }
