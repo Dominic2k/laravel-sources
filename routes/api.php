@@ -118,12 +118,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('teachers', TeacherController::class)->except(['index', 'show']);
     Route::apiResource('users', UserController::class)->except(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
-
-
-
-
-
-    // Student goals (authenticated with ownership check)
     Route::prefix('student/{student_id}')
         ->middleware('student-account')
         ->controller(GoalController::class)
