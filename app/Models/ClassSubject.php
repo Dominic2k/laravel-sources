@@ -10,7 +10,12 @@ class ClassSubject extends Model
     use HasFactory;
     
     protected $fillable = [
-        'class_id', 'subject_id', 'teacher_id', 'schedule_info', 'room', 'status'
+        'class_id', 
+        'subject_id', 
+        'teacher_id', 
+        'schedule_info', 
+        'room', 
+        'status'
     ];
     
     public function class()
@@ -20,7 +25,7 @@ class ClassSubject extends Model
     
     public function subject()
     {
-        return $this->belongsTo(Subject::class);
+        return $this->belongsTo(Subject::class, 'subject_id');
     }
     
     public function teacher()
@@ -30,7 +35,7 @@ class ClassSubject extends Model
     
     public function goals()
     {
-        return $this->hasMany(Goal::class);
+        return $this->hasMany(Goal::class, 'class_subject_id');
     }
 }
 

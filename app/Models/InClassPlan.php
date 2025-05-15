@@ -2,12 +2,11 @@
 
 namespace App\Models;
 
-namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
 
 class InClassPlan extends Model
 {
+    //use HasFactory;
     protected $fillable = [
         'goal_id',
         'student_id',
@@ -22,4 +21,3 @@ class InClassPlan extends Model
         'additional_notes',
     ];
 }
-

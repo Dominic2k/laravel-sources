@@ -1,12 +1,14 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+
 
 
 class UserController extends Controller
@@ -76,7 +78,7 @@ class UserController extends Controller
             'data' => $user
         ]);
     }
-    
+        
     public function destroy($id)
     {
         $user = User::findOrFail($id);

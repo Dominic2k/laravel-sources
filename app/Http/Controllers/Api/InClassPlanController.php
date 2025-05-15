@@ -18,9 +18,7 @@ class InClassPlanController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'goal_id' => 'nullable|integer',
-            'student_id' => 'nullable|integer',
-            'class_subject_id' => 'nullable|integer',
+            'goal_id' => 'nullable|integer|exists:goals,id',
             'date' => 'nullable|date',
             'skills_module' => 'required|string|max:255',
             'lesson_summary' => 'required|string',
@@ -33,7 +31,15 @@ class InClassPlanController extends Controller
 
         $plan = InClassPlan::create($validated);
 
-        return response()->json($plan, 201);
+        // Nếu cần thông tin về student và class_subject, có thể load thông qua goal
+        if ($plan->goal_id) {
+            $plan->load('goal.student', 'goal.classSubject');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $plan
+        ], 201);
     }
 
     // GET /api/in-class-plans/{id}
@@ -59,3 +65,4 @@ class InClassPlanController extends Controller
         return response()->json(['message' => 'Deleted successfully']);
     }
 }
+

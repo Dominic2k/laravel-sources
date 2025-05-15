@@ -8,6 +8,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\Sanctum;
+use Illuminate\Support\Facades\Log;
+
 
 class AuthController extends Controller
 {
@@ -38,3 +41,4 @@ class AuthController extends Controller
         return response()->json(['message' => 'Logged out successfully']);
     }
 }
+
