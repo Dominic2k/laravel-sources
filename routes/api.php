@@ -10,7 +10,8 @@ use App\Http\Controllers\Api\{
     ClassSubjectController,
     StudentController,
     UserController,
-    InClassPlanController
+    InClassPlanController,
+    SelfStudyPlanController
 };
 
 // --- Public API ---
@@ -21,6 +22,7 @@ Route::prefix('public')->group(function () {
     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
     Route::apiResource('users', UserController::class)->only(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+    Route::apiResource('self-study-plans', SelfStudyPlanController::class);
 
     // Lấy danh sách lớp học cho student qua user_id
     Route::get('student/{user_id}/classes', function ($user_id) {
@@ -70,6 +72,7 @@ Route::prefix('public')->group(function () {
         ->group(function () {
             Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
             Route::get('goal/{goal_id}', 'getGoalDetail');
+            Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
         });
 });
 
@@ -79,6 +82,23 @@ Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']
 
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
+
+// API mở rộng: lọc theo class_name
+Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
+
+// --- Student Goals (Public) ---
+Route::prefix('student/{student_id}')
+    ->controller(GoalController::class)
+    ->group(function () {
+        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+        Route::get('goal/{goal_id}', 'getGoalDetail');
+        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+        Route::put('goal/{goal_id}', 'updateGoal');
+        Route::delete('goal/{goal_id}', 'deleteGoal');
+    });
+
+// --- Student Subjects ---
+Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
 
 // --- Authenticated routes ---
 Route::middleware('auth:sanctum')->group(function () {
@@ -106,3 +126,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // --- Student Subjects ---
 Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
+
