@@ -11,7 +11,8 @@ use App\Http\Controllers\Api\{
     StudentController,
     UserController,
     InClassPlanController,
-    SelfStudyPlanController
+    SelfStudyPlanController,
+    AuthController
 };
 
 // --- Public API ---
@@ -93,15 +94,20 @@ Route::prefix('student/{student_id}')
 Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
 
 // --- Authenticated routes ---
+
+Route::post('login', [AuthController::class, 'login']);
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
-
+    Route::apiResource('/auth', AuthController::class);
     Route::apiResource('classes', ClassController::class)->except(['index', 'show']);
     Route::apiResource('subjects', SubjectController::class)->except(['index', 'show']);
     Route::apiResource('students', StudentController::class)->except(['index', 'show']);
     Route::apiResource('teachers', TeacherController::class)->except(['index', 'show']);
     Route::apiResource('users', UserController::class)->except(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
+
 
     // Authenticated student-goal routes with ownership check
     Route::prefix('student/{student_id}')
