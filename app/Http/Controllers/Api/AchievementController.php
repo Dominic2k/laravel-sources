@@ -47,11 +47,11 @@ class AchievementController extends Controller
     $achievement = Achievement::create($validated);
 
     if (!$achievement) {
-        Log::error('Failed to create achievement');
+        // Log::error('Failed to create achievement');
         return response()->json(['message' => 'Failed to create achievement'], 500);
     }
 
-    Log::info('Achievement created:', $achievement->toArray());
+    // Log::info('Achievement created:', $achievement->toArray());
 
     return response()->json($achievement, 200);
 }

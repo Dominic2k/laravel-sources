@@ -12,12 +12,12 @@ use App\Http\Controllers\Api\{
     UserController,
     InClassPlanController,
     SelfStudyPlanController,
+    AchievementController,
     AuthController
 };
 
 // --- Public API ---
 Route::prefix('public')->group(function () {
-    Route::apiResource('goals', GoalController::class)->only(['index', 'show']);
     Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
     Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
@@ -27,8 +27,8 @@ Route::prefix('public')->group(function () {
     Route::apiResource('self-study-plans', SelfStudyPlanController::class);
 
     // Lấy danh sách lớp học cho student qua user_id
-    Route::get('student/{user_id}/classes', function ($userId) {
-        $student = \App\Models\Student::where('user_id', $userId)->first();
+    Route::get('student/{user_id}/classes', function ($user_id) {
+        $student = \App\Models\Student::where('user_id', $user_id)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
@@ -40,8 +40,8 @@ Route::prefix('public')->group(function () {
     });
 
     // Lấy danh sách lớp học kèm thông tin môn, giáo viên
-    Route::get('student/{user_id}/class-details', function ($userId) {
-        $student = \App\Models\Student::where('user_id', $userId)->first();
+    Route::get('student/{user_id}/class-details', function ($user_id) {
+        $student = \App\Models\Student::where('user_id', $user_id)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
@@ -67,6 +67,15 @@ Route::prefix('public')->group(function () {
 
         return response()->json(['success' => true, 'data' => $classes]);
     });
+
+    // Public Student Goals (nếu muốn cho phép người ngoài xem)
+    Route::prefix('student/{student_id}')
+        ->controller(GoalController::class)
+        ->group(function () {
+            Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+            Route::get('goal/{goal_id}', 'getGoalDetail');
+            Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+        });
 });
 
 // --- Public: student profile ---
@@ -109,12 +118,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('teachers', TeacherController::class)->except(['index', 'show']);
     Route::apiResource('users', UserController::class)->except(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
-
-
-
-
-
-    // Authenticated student-goal routes with ownership check
     Route::prefix('student/{student_id}')
         ->middleware('student-account')
         ->controller(GoalController::class)
@@ -134,4 +137,8 @@ Route::apiResource('achievements', AchievementController::class);
 
 
 
+
+
+// --- Student Subjects ---
+Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
 
