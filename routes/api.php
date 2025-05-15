@@ -115,3 +115,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('goal/{goal_id}', 'deleteGoal');
         });
 });
+Route::apiResource('achievements', AchievementController::class);
+
+
+
+
+
+
+
+
