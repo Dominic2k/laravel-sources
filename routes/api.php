@@ -11,7 +11,8 @@ use App\Http\Controllers\Api\{
     StudentController,
     UserController,
     InClassPlanController,
-    SelfStudyPlanController
+    SelfStudyPlanController,
+    TeacherTagController
 };
 
 // --- Public API ---
@@ -115,3 +116,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('goal/{goal_id}', 'deleteGoal');
         });
 });
+
+
+//Tag teacher route
+Route::apiResource('teacher-tags', TeacherTagController::class);
+Route::put('teacher-tags/{id}/resolve', [TeacherTagController::class, 'resolve']);
