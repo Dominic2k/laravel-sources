@@ -29,6 +29,10 @@ class RoleMiddleware
         if (!Auth::guard('sanctum')->check()) {
             return response()->json(['message' => 'Token không hợp lệ'], 401);
         }
+        
+        if (!$role) {
+            return $next($request);
+        }
 
         if (Auth::guard('sanctum')->user()->role === $role) {
             return $next($request);

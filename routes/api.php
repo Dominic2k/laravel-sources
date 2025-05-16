@@ -107,6 +107,9 @@ Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubject
 Route::post('login', [AuthController::class, 'login']);
 
 Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+Route::post("/register", [AuthController::class, 'register'])->middleware("admin-account");
+Route::get("/logout", [AuthController::class, 'logout'])->middleware("logout");
+
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -130,14 +133,6 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 });
 Route::apiResource('achievements', AchievementController::class);
-
-
-
-
-
-
-
-
 
 // --- Student Subjects ---
 Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
