@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Auth;
 
 // --- Auth ---
 Route::post('login', [AuthController::class, 'login']);
+Route::get('logout', [AuthController::class, "logout"])->middleware("logout");
+Route::post("register", [AuthController::class, "register"])->middleware("admin-account");
 
 // --- Public APIs ---
 Route::prefix('public')->group(function () {
