@@ -78,6 +78,40 @@ Route::prefix('public')->group(function () {
 
 // --- Authenticated APIs ---
 // Đưa route lấy lớp học của student vào auth, lấy user từ token
+// --- Public: student profile ---
+Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
+Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
+
+// --- In-class plans ---
+Route::apiResource('in-class-plans', InClassPlanController::class);
+
+// API mở rộng: lọc theo class_name
+Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
+
+// --- Student Goals (Public) ---
+Route::prefix('student/{student_id}')
+    ->controller(GoalController::class)
+    ->group(function () {
+        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+        Route::get('goal/{goal_id}', 'getGoalDetail');
+        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+        Route::put('goal/{goal_id}', 'updateGoal');
+        Route::delete('goal/{goal_id}', 'deleteGoal');
+    });
+
+// --- Student Subjects ---
+Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
+
+// --- Authenticated routes ---
+
+Route::post('login', [AuthController::class, 'login']);
+
+Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+Route::post("/register", [AuthController::class, 'register'])->middleware("admin-account");
+Route::get("/logout", [AuthController::class, 'logout'])->middleware("logout");
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
     Route::apiResource('/auth', AuthController::class);
@@ -101,13 +135,13 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::apiResource('achievements', AchievementController::class);
 
 
-        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-            ->join('classes', 'class_students.class_id', '=', 'classes.id')
-            ->select('classes.*')
-            ->get();
+        // $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+        //     ->join('classes', 'class_students.class_id', '=', 'classes.id')
+        //     ->select('classes.*')
+        //     ->get();
 
-        return response()->json(['success' => true, 'data' => $classes]);
-    });
+        // return response()->json(['success' => true, 'data' => $classes]);
+
 
     Route::get('/student/class-details', function (Request $request) {
         $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
@@ -141,7 +175,7 @@ Route::apiResource('achievements', AchievementController::class);
     Route::get('/student/subjects', function (Request $request) {
         try {
             // Kiểm tra user
-            $user = $request->user();
+            $user = Auth::guard('sanctum')->user();
 
             // Kiểm tra student
             $student = \App\Models\Student::where('user_id', $user->id)->first();
@@ -245,7 +279,11 @@ Route::apiResource('achievements', AchievementController::class);
     Route::get('/student/in-class-plans/{id}', [InClassPlanController::class, 'show']);
     Route::put('/student/in-class-plans/{id}', [InClassPlanController::class, 'update']);
     Route::delete('/student/in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
-});
+
 
 // --- Achievements ---
 Route::apiResource('achievements', AchievementController::class);
+
+// --- Student Subjects ---
+Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
+
