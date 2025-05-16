@@ -120,9 +120,9 @@ class StudentController extends Controller
     }
 
     /////
-     public function getProfile($id)
+     public function getProfile(Request $request)
     {
-        $user = User::findOrFail($id);
+        $user = $request->user();
         $student = $user->student; 
 
         return response()->json([
@@ -134,47 +134,51 @@ class StudentController extends Controller
         ]);
     }
 
-    public function updateProfile(Request $request, $id)
-{
-    $validated = $request->validate([
-        'full_name' => 'sometimes|string',
-        'email' => 'sometimes|email|unique:users,email,' . $id,
-        'password' => 'sometimes|string|min:6',
-        'student_code' => 'sometimes|string|unique:students,student_code,' . $id . ',user_id',
-        'admission_date' => 'sometimes|date',
-        'current_semester' => 'sometimes|integer|min:1|max:6',
-    ]);
-    $user = User::findOrFail($id);
-    $student = $user->student;
-    if (isset($validated['full_name'])) {
-        $user->full_name = $validated['full_name'];
-    }
-    if (isset($validated['email'])) {
-        $user->email = $validated['email'];
-    }
-    if (isset($validated['password'])) {
-        $user->password = bcrypt($validated['password']);
-    }
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $student = $user->student;
 
-    // Cập nhật thông tin sinh viên
-    if (isset($validated['student_code'])) {
-        $student->student_code = $validated['student_code'];
+        $validated = $request->validate([
+            'full_name' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'password' => 'sometimes|string|min:6',
+            'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
+            'admission_date' => 'sometimes|date',
+            'current_semester' => 'sometimes|integer|min:1|max:6',
+        ]);
+
+        if (isset($validated['full_name'])) {
+            $user->full_name = $validated['full_name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+        if (isset($validated['password'])) {
+            $user->password = bcrypt($validated['password']);
+        }
+
+        // Cập nhật thông tin sinh viên
+        if (isset($validated['student_code'])) {
+            $student->student_code = $validated['student_code'];
+        }
+        if (isset($validated['admission_date'])) {
+            $student->admission_date = $validated['admission_date'];
+        }
+        if (isset($validated['current_semester'])) {
+            $student->current_semester = $validated['current_semester'];
+        }
+
+        $user->save();
+        $student->save();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'student' => $student
+            ]
+        ]);
     }
-    if (isset($validated['admission_date'])) {
-        $student->admission_date = $validated['admission_date'];
-    }
-    if (isset($validated['current_semester'])) {
-        $student->current_semester = $validated['current_semester'];
-    }
-    $user->save();
-    $student->save();
-    return response()->json([
-        'success' => true,
-        'data' => [
-            'user' => $user,
-            'student' => $student
-        ]
-    ]);
-}
 
 }
