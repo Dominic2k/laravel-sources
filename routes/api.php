@@ -110,10 +110,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('users', UserController::class)->except(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
 
-
-
-
-
     // Authenticated student-goal routes with ownership check
     Route::prefix('student/{student_id}')
         ->middleware('student-account')
