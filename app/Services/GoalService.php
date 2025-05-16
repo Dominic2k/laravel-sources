@@ -2,213 +2,89 @@
 
 namespace App\Services;
 
+use App\Models\Goal;
+use App\Models\Student;
+use App\Models\ClassSubject;
 use App\Repositories\GoalRepository;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 
 class GoalService
 {
     protected $goalRepository;
 
-    /**
-     * Khởi tạo service với repository
-     *
-     * @param GoalRepository $goalRepository
-     */
     public function __construct(GoalRepository $goalRepository)
     {
         $this->goalRepository = $goalRepository;
     }
 
-    /**
-     * Lấy danh sách goals theo sinh viên và môn học
-     *
-     * @param int $studentId
-     * @param int $classSubjectId
-     * @return array
-     * @throws \Exception
-     */
     public function getGoalsBySubject($studentId, $classSubjectId)
     {
-        // Kiểm tra sinh viên tồn tại
-        $student = $this->goalRepository->findStudent($studentId);
-        if (!$student) {
+        return $this->goalRepository->getByStudentAndSubject($studentId, $classSubjectId);
+    }
+
+    public function getGoalDetail(Student $student, $goalId)
+    {
+        $goal = $this->goalRepository->findGoal($goalId, $student->id);
+        if (!$goal) {
+            throw new \Exception('Goal not found', 404);
+        }
+        return $this->goalRepository->getDetail($goalId, $student->id);
+    }
+
+    public function createGoalForSubject(Student $student, $classSubjectId, array $data)
+    {
+        if (!$student || !$student->user_id) {
             throw new \Exception('Student not found', 404);
         }
 
-        // Kiểm tra môn học tồn tại
         $classSubject = $this->goalRepository->findClassSubject($classSubjectId);
         if (!$classSubject) {
             throw new \Exception('Class subject not found', 404);
         }
 
-        // Lấy danh sách goals
-        $goals = $this->goalRepository->getByStudentAndSubject($studentId, $classSubjectId);
-        
-        return [
-            'success' => true,
-            'data' => $goals
+        // Validate required fields
+        $requiredFields = ['title', 'goal_type', 'start_date', 'end_date', 'priority'];
+        foreach ($requiredFields as $field) {
+            if (empty($data[$field])) {
+                throw new \Exception("Field {$field} is required", 422);
+            }
+        }
+
+        // Validate goal_type
+        $validGoalTypes = ['weekly', 'monthly', 'semester', 'custom'];
+        if (!in_array($data['goal_type'], $validGoalTypes)) {
+            throw new \Exception('Invalid goal type. Must be one of: ' . implode(', ', $validGoalTypes), 422);
+        }
+
+        // Validate priority
+        $validPriorities = ['low', 'medium', 'high', 'critical'];
+        if (!in_array($data['priority'], $validPriorities)) {
+            throw new \Exception('Invalid priority. Must be one of: ' . implode(', ', $validPriorities), 422);
+        }
+
+        // Validate dates
+        if (strtotime($data['start_date']) > strtotime($data['end_date'])) {
+            throw new \Exception('Start date must be before end date', 422);
+        }
+
+        // Prepare data
+        $goalData = [
+            'student_id' => $student->user_id,
+            'class_subject_id' => $classSubjectId,
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'goal_type' => $data['goal_type'],
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'priority' => $data['priority'],
+            'is_private' => $data['is_private'] ?? false,
+            'status' => 'not_started' // Default status
         ];
-    }
 
-    /**
-     * Lấy chi tiết goal
-     *
-     * @param int $studentId
-     * @param int $goalId
-     * @return array
-     * @throws \Exception
-     */
-    public function getGoalDetail($studentId, $goalId)
-    {
-        // Kiểm tra sinh viên tồn tại
-        $student = $this->goalRepository->findStudent($studentId);
-        if (!$student) {
-            throw new \Exception('Student not found', 404);
+        try {
+            $goal = $this->goalRepository->create($goalData);
+            return $goal;
+        } catch (\Exception $e) {
+            throw $e;
         }
-
-        // Lấy chi tiết goal
-        $goal = $this->goalRepository->getDetail($goalId, $studentId);
-        if (!$goal) {
-            throw new \Exception('Goal not found or not authorized', 404);
-        }
-
-        return [
-            'success' => true,
-            'data' => $goal
-        ];
-    }
-
-    /**
-     * Tạo goal mới
-     *
-     * @param Request $request
-     * @param int $studentId
-     * @param int $classSubjectId
-     * @return array
-     * @throws \Exception
-     */
-    public function createGoal(Request $request, $studentId, $classSubjectId)
-    {
-        // Kiểm tra sinh viên tồn tại
-        $student = $this->goalRepository->findStudent($studentId);
-        if (!$student) {
-            throw new \Exception('Student not found', 404);
-        }
-
-        // Kiểm tra môn học tồn tại
-        $classSubject = $this->goalRepository->findClassSubject($classSubjectId);
-        if (!$classSubject) {
-            throw new \Exception('Class subject not found', 404);
-        }
-
-        // Validate dữ liệu
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string',
-            'description' => 'nullable|string',
-            'goal_type' => 'required|in:weekly,monthly,semester,custom',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'status' => 'required|in:not_started,in_progress,completed,failed,archived',
-            'priority' => 'required|in:low,medium,high,critical',
-            'is_private' => 'boolean'
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        // Chuẩn bị dữ liệu
-        $data = $validator->validated();
-        $data['student_id'] = $studentId;
-        $data['class_subject_id'] = $classSubjectId;
-
-        // Tạo goal mới
-        $goal = $this->goalRepository->create($data);
-
-        return [
-            'success' => true,
-            'data' => $goal
-        ];
-    }
-
-    /**
-     * Cập nhật goal
-     *
-     * @param Request $request
-     * @param int $studentId
-     * @param int $goalId
-     * @return array
-     * @throws \Exception
-     */
-    public function updateGoal(Request $request, $studentId, $goalId)
-    {
-        // Kiểm tra sinh viên tồn tại
-        $student = $this->goalRepository->findStudent($studentId);
-        if (!$student) {
-            throw new \Exception('Student not found', 404);
-        }
-
-        // Kiểm tra goal tồn tại và thuộc về sinh viên
-        $goal = $this->goalRepository->findGoal($goalId, $studentId);
-        if (!$goal) {
-            throw new \Exception('Goal not found or not authorized', 404);
-        }
-
-        // Validate dữ liệu
-        $validator = Validator::make($request->all(), [
-            'title' => 'sometimes|string',
-            'description' => 'nullable|string',
-            'goal_type' => 'sometimes|in:weekly,monthly,semester,custom',
-            'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date|after_or_equal:start_date',
-            'status' => 'sometimes|in:not_started,in_progress,completed,failed,archived',
-            'priority' => 'sometimes|in:low,medium,high,critical',
-            'is_private' => 'boolean'
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        // Cập nhật goal
-        $goal = $this->goalRepository->update($goal, $validator->validated());
-
-        return [
-            'success' => true,
-            'data' => $goal
-        ];
-    }
-
-    /**
-     * Xóa goal
-     *
-     * @param int $studentId
-     * @param int $goalId
-     * @return array
-     * @throws \Exception
-     */
-    public function deleteGoal($studentId, $goalId)
-    {
-        // Kiểm tra sinh viên tồn tại
-        $student = $this->goalRepository->findStudent($studentId);
-        if (!$student) {
-            throw new \Exception('Student not found', 404);
-        }
-
-        // Kiểm tra goal tồn tại và thuộc về sinh viên
-        $goal = $this->goalRepository->findGoal($goalId, $studentId);
-        if (!$goal) {
-            throw new \Exception('Goal not found or not authorized', 404);
-        }
-
-        // Xóa goal
-        $this->goalRepository->delete($goal);
-
-        return [
-            'success' => true,
-            'message' => 'Goal deleted successfully'
-        ];
     }
 }
