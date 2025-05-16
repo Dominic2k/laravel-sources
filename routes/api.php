@@ -227,6 +227,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/in-class-plans/{id}', [InClassPlanController::class, 'show']);
     Route::put('/student/in-class-plans/{id}', [InClassPlanController::class, 'update']);
     Route::delete('/student/in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
+
+    // --- Profile ---
+    Route::get('/student/profile', [StudentController::class, 'getProfile']);
+    Route::put('/student/profile', [StudentController::class, 'updateProfile']);
 });
 
 // --- Achievements ---
