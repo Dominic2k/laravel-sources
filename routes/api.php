@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\{
     AchievementController,
     AuthController
 };
+use Illuminate\Support\Facades\Auth;
 
 // --- Auth ---
 Route::post('login', [AuthController::class, 'login']);
@@ -78,9 +79,44 @@ Route::prefix('public')->group(function () {
 
 // --- Authenticated APIs ---
 // Đưa route lấy lớp học của student vào auth, lấy user từ token
+// --- Public: student profile ---
+Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
+Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
+
+// --- In-class plans ---
+Route::apiResource('in-class-plans', InClassPlanController::class);
+
+// API mở rộng: lọc theo class_name
+Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
+
+// --- Student Goals (Public) ---
+Route::prefix('student/{student_id}')
+    ->controller(GoalController::class)
+    ->group(function () {
+        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+        Route::get('goal/{goal_id}', 'getGoalDetail');
+        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+        Route::put('goal/{goal_id}', 'updateGoal');
+        Route::delete('goal/{goal_id}', 'deleteGoal');
+    });
+
+// --- Student Subjects ---
+Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
+
+// --- Authenticated routes ---
+
+Route::post('login', [AuthController::class, 'login']);
+
+Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+Route::post("/register", [AuthController::class, 'register'])->middleware("admin-account");
+Route::get("/logout", [AuthController::class, 'logout'])->middleware("logout");
+
+
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/classes', function (Request $request) {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $user = Auth::guard('sanctum')->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
@@ -92,7 +128,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/student/class-details', function (Request $request) {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $user = Auth::guard('sanctum')->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
@@ -122,17 +159,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Lấy danh sách môn học của sinh viên đã đăng nhập
     Route::get('/student/subjects', function (Request $request) {
         try {
-            // Kiểm tra user
-            $user = $request->user();
-
-            // Kiểm tra student
+            $user = Auth::guard('sanctum')->user();
             $student = \App\Models\Student::where('user_id', $user->id)->first();
             
             if (!$student) {
                 return response()->json(['error' => 'Student not found'], 404);
             }
 
-            // Query chính
             $subjects = \App\Models\ClassStudent::where('class_students.student_id', $student->user_id)
                 ->join('classes', 'class_students.class_id', '=', 'classes.id')
                 ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
@@ -164,17 +197,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Lấy thông tin chi tiết của một subject
     Route::get('/student/subjects/{subjectId}/detail', function (Request $request, $subjectId) {
         try {
-            // Kiểm tra user
-            $user = $request->user();
-
-            // Kiểm tra student
+            $user = Auth::guard('sanctum')->user();
             $student = \App\Models\Student::where('user_id', $user->id)->first();
             
             if (!$student) {
                 return response()->json(['error' => 'Student not found'], 404);
             }
 
-            // Query để lấy thông tin chi tiết của subject
             $subject = \App\Models\ClassStudent::where('class_students.student_id', $student->user_id)
                 ->join('classes', 'class_students.class_id', '=', 'classes.id')
                 ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
@@ -228,10 +257,69 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/student/in-class-plans/{id}', [InClassPlanController::class, 'update']);
     Route::delete('/student/in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
 
-    // --- Profile ---
-    Route::get('/student/profile', [StudentController::class, 'getProfile']);
-    Route::put('/student/profile', [StudentController::class, 'updateProfile']);
-});
 
 // --- Achievements ---
 Route::apiResource('achievements', AchievementController::class);
+
+// --- Student Subjects ---
+Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
+
+    // --- Profile ---
+    Route::get('/student/profile', function (Request $request) {
+        $user = Auth::guard('sanctum')->user();
+        $student = $user->student;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'student' => $student
+            ]
+        ]);
+    });
+
+    Route::put('/student/profile', function (Request $request) {
+        $user = Auth::guard('sanctum')->user();
+        $student = $user->student;
+
+        $validated = $request->validate([
+            'full_name' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'password' => 'sometimes|string|min:6',
+            'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
+            'admission_date' => 'sometimes|date',
+            'current_semester' => 'sometimes|integer|min:1|max:6',
+        ]);
+
+        if (isset($validated['full_name'])) {
+            $user->full_name = $validated['full_name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+        if (isset($validated['password'])) {
+            $user->password = bcrypt($validated['password']);
+        }
+
+        if (isset($validated['student_code'])) {
+            $student->student_code = $validated['student_code'];
+        }
+        if (isset($validated['admission_date'])) {
+            $student->admission_date = $validated['admission_date'];
+        }
+        if (isset($validated['current_semester'])) {
+            $student->current_semester = $validated['current_semester'];
+        }
+
+        $user->save();
+        $student->save();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'student' => $student
+            ]
+        ]);
+    });
+});
