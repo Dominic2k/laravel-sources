@@ -71,4 +71,21 @@ class ClassController extends Controller
             'message' => 'Class deleted successfully'
         ]);
     }
+
+    public function getStudents($id)
+    {
+        $class = Classes::with('students.user')->find($id);
+
+        if (!$class) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Class not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $class->students
+        ]);
+    }
 }

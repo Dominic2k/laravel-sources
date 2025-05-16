@@ -35,7 +35,6 @@ class SelfStudyPlan extends Model
 
     public function goal()
     {
-        return $this->belongsTo(Goal::class);
+        return $this->belongsTo(Goal::class, 'goal_id');
     }
-
 }

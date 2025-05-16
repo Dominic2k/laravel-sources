@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SelfStudyPlan;
+use App\Models\Goal;
 
 class SelfStudyPlanController extends Controller
 {
@@ -83,9 +84,21 @@ class SelfStudyPlanController extends Controller
         return response()->json(['message' => 'Deleted successfully']);
     }
 
-    public function filterByGoal($selfId)
+    public function filterByGoal($classSubjectId)
     {
-        $plans = SelfStudyPlan::where('id', $selfId)
+        $plans = SelfStudyPlan::where('id', $classSubjectId)
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return response()->json($plans);
+    }
+
+    public function filterByClassSubject($classSubjectId)
+{
+    $plans = SelfStudyPlan::with('goal.classSubject')
+            ->whereHas('goal', function($query) use ($classSubjectId) {
+                $query->where('class_subject_id', $classSubjectId);
+            })
             ->orderBy('date', 'desc')
             ->get();
 

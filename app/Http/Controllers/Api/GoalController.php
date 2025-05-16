@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\GoalService;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class GoalController extends Controller
 {
@@ -34,7 +35,13 @@ class GoalController extends Controller
             $result = $this->goalService->getGoalsBySubject($studentId, $classSubjectId);
             return response()->json($result);
         } catch (\Exception $e) {
-            return $this->handleException($e);
+            Log::error('Goal loading error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Unable to load goals: ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500);
         }
     }
 

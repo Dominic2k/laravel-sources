@@ -59,3 +59,49 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+
+## Database teamplete:
+
+<!-- Users -->
+-- Admin user
+INSERT INTO `users` (`id`, `password`, `role`, `email`, `full_name`, `birthday`, `last_login`, `created_at`, `updated_at`)
+VALUES 
+('admin-001', 'admin', 'admin', 'admin@example.com', 'System Admin', '1980-01-01', NOW(), NOW(), NOW());
+
+-- 5 student users
+INSERT INTO `users` (`id`, `password`, `role`, `email`, `full_name`, `birthday`, `last_login`, `created_at`, `updated_at`)
+VALUES
+('student-001', '1234567890', 'student', 'student1@example.com', 'Student One', '2005-05-01', NOW(), NOW(), NOW()),
+('student-002', '12345', 'student', 'student2@example.com', 'Student Two', '2005-06-02', NOW(), NOW(), NOW()),
+('student-003', 'hashed_password', 'student', 'student3@example.com', 'Student Three', '2005-07-03', NOW(), NOW(), NOW()),
+('student-004', 'hashed_password', 'student', 'student4@example.com', 'Student Four', '2005-08-04', NOW(), NOW(), NOW()),
+('student-005', 'hashed_password', 'student', 'student5@example.com', 'Student Five', '2005-09-05', NOW(), NOW(), NOW());
+
+-- 5 teacher users
+INSERT INTO `users` (`id`, `password`, `role`, `email`, `full_name`, `birthday`, `last_login`, `created_at`, `updated_at`)
+VALUES
+('teacher-001', 'hashed_password', 'teacher', 'teacher1@example.com', 'Teacher One', '1985-05-01', NOW(), NOW(), NOW()),
+('teacher-002', 'hashed_password', 'teacher', 'teacher2@example.com', 'Teacher Two', '1985-06-02', NOW(), NOW(), NOW()),
+('teacher-003', 'hashed_password', 'teacher', 'teacher3@example.com', 'Teacher Three', '1985-07-03', NOW(), NOW(), NOW()),
+('teacher-004', 'hashed_password', 'teacher', 'teacher4@example.com', 'Teacher Four', '1985-08-04', NOW(), NOW(), NOW()),
+('teacher-005', 'hashed_password', 'teacher', 'teacher5@example.com', 'Teacher Five', '1985-09-05', NOW(), NOW(), NOW());
+
+<!-- Student -->
+INSERT INTO `students`(`user_id`, `student_code`, `admission_date`, `current_semester`)
+VALUES
+(2, 'STU001', '2022-09-01', 3),
+(3, 'STU002', '2022-09-01', 3),
+(4, 'STU003', '2022-09-01', 3),
+(5, 'STU004', '2022-09-01', 3),
+(6, 'STU005', '2022-09-01', 3);
+
+<!-- Teacher -->
+INSERT INTO `teachers`(`user_id`, `specialization`, `join_date`, `bio`)
+VALUES
+(7, 'Mathematics', '2020-01-10', 'Experienced math teacher.'),
+(8, 'Physics', '2020-01-10', 'Physics enthusiast with a PhD.'),
+(9, 'Chemistry', '2020-01-10', 'Specialist in organic chemistry.'),
+(10, 'Biology', '2020-01-10', 'Passionate about life sciences.'),
+(11, 'Computer Science', '2020-01-10', 'Software engineer turned teacher.');
