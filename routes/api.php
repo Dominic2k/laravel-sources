@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\{
     InClassPlanController,
     SelfStudyPlanController
 };
+use App\Models\SelfStudyPlan;
 
 // --- Public API ---
 Route::prefix('public')->group(function () {
@@ -68,6 +69,9 @@ Route::prefix('public')->group(function () {
     });
 });
 
+// --- Get all classes of teacher joined --- 
+Route::get('teacher/{user_id}/classes', [TeacherController::class, 'getClasses']);
+
 // --- Public: student profile ---
 Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
 Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
@@ -76,7 +80,8 @@ Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']
 Route::apiResource('in-class-plans', InClassPlanController::class);
 
 // API mở rộng: lọc theo goal
-Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByGoal']);
+Route::get('self-study-plans/goal/{selfId}', [SelfStudyPlanController::class, 'filterByGoal']);
+Route::post('/self-study-plans', [SelfStudyPlanController::class,'store']);
 
 // --- Student Goals (Public) ---
 Route::prefix('student/{student_id}')

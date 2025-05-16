@@ -73,4 +73,18 @@ class TeacherController extends Controller
             'message' => 'Teacher deleted successfully'
         ]);
     }
+
+    public function getClasses($user_id)
+    {
+        $teacher = Teacher::with('classes')->where('user_id', $user_id)->first();
+
+        if (!$teacher) {
+            return response()->json(['success' => false, 'message' => 'Teacher not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $teacher->classes
+        ]);
+    }
 }
