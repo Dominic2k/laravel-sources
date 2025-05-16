@@ -30,31 +30,57 @@ class AchievementController extends Controller
     }
 
     // Tạo thành tựu mới
+//     public function store(Request $request)
+// {
+//     // \Log::info('Store Achievement called', $request->all());
+
+//     $validated = $request->validate([
+//         'student_id' => 'required|integer',
+//         'class_subject_id' => 'required|integer',
+//         'title' => 'required|string|max:255',
+//         'description' => 'nullable|string',
+//         'file_url' => 'nullable|string',
+//         'semester' => 'required|in:1,2,3,4,5,6',
+//         'achievement_date' => 'required|date',
+//     ]);
+
+//     $achievement = Achievement::create($validated);
+
+//     if (!$achievement) {
+//         Log::error('Failed to create achievement');
+//         return response()->json(['message' => 'Failed to create achievement'], 500);
+//     }
+
+//     Log::info('Achievement created:', $achievement->toArray());
+
+//     return response()->json($achievement, 200);
+// }
     public function store(Request $request)
 {
-    // \Log::info('Store Achievement called', $request->all());
-
     $validated = $request->validate([
-        'student_id' => 'required|integer',
-        'class_subject_id' => 'required|integer',
+        'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         'title' => 'required|string|max:255',
         'description' => 'nullable|string',
-        'file_url' => 'nullable|string',
-        'semester' => 'required|in:1,2,3,4,5,6',
+        'class_subject_id' => 'required|integer',
         'achievement_date' => 'required|date',
+        'semester' => 'required|integer',
     ]);
 
-    $achievement = Achievement::create($validated);
+    $path = $request->file('file')->store('achievements', 'public');
 
-    if (!$achievement) {
-        Log::error('Failed to create achievement');
-        return response()->json(['message' => 'Failed to create achievement'], 500);
-    }
+    $achievement = Achievement::create([
+        'user_id' => auth()->id(),
+        'file_url' => $path,
+        'title' => $validated['title'],
+        'description' => $validated['description'],
+        'class_subject_id' => $validated['class_subject_id'],
+        'achievement_date' => $validated['achievement_date'],
+        'semester' => $validated['semester'],
+    ]);
 
-    Log::info('Achievement created:', $achievement->toArray());
-
-    return response()->json($achievement, 200);
+    return response()->json($achievement, 201);
 }
+
 
 
     // Cập nhật thành tựu
@@ -78,7 +104,7 @@ class AchievementController extends Controller
 
         $achievement->update($validated);
 
-        return response()->json($achievement);
+        return response()->json(["achiement" => $achievement]);
     }
 
     // Xóa thành tựu

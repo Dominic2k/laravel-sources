@@ -11,7 +11,8 @@ use App\Http\Controllers\Api\{
     StudentController,
     UserController,
     InClassPlanController,
-    SelfStudyPlanController
+    SelfStudyPlanController,
+    AchievementController
 };
 
 // --- Public API ---
