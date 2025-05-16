@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('self_study_plans', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('goal_id'); 
-            $table->string('class_name');
             $table->date('date');
             $table->string('lesson');
             $table->string('time');
