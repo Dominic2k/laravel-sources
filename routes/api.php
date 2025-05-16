@@ -79,9 +79,27 @@ Route::prefix('public')->group(function () {
 // --- Authenticated APIs ---
 // Đưa route lấy lớp học của student vào auth, lấy user từ token
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/student/classes', function (Request $request) {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
-        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+    Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
+    Route::apiResource('/auth', AuthController::class);
+    Route::apiResource('classes', ClassController::class)->except(['index', 'show']);
+    Route::apiResource('subjects', SubjectController::class)->except(['index', 'show']);
+    Route::apiResource('students', StudentController::class)->except(['index', 'show']);
+    Route::apiResource('teachers', TeacherController::class)->except(['index', 'show']);
+    Route::apiResource('users', UserController::class)->except(['index', 'show']);
+    Route::apiResource('class-subjects', ClassSubjectController::class)->except(['index', 'show']);
+    Route::prefix('student/{student_id}')
+        ->middleware('student-account')
+        ->controller(GoalController::class)
+        ->group(function () {
+            Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+            Route::get('goal/{goal_id}', 'getGoalDetail');
+            Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+            Route::put('goal/{goal_id}', 'updateGoal');
+            Route::delete('goal/{goal_id}', 'deleteGoal');
+        });
+});
+Route::apiResource('achievements', AchievementController::class);
+
 
         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
