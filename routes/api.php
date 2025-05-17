@@ -23,6 +23,8 @@ Route::post('login', [AuthController::class, 'login']);
 Route::get('logout', [AuthController::class, "logout"])->middleware("logout");
 Route::post("register", [AuthController::class, "register"])->middleware("admin-account");
 
+Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+
 // --- Public APIs ---
 Route::prefix('public')->group(function () {
     Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
@@ -47,33 +49,33 @@ Route::prefix('public')->group(function () {
     });
 
     // Lấy chi tiết lớp học kèm môn học và giáo viên
-    Route::get('student/{user_id}/class-details', function ($user_id) {
-        $student = \App\Models\Student::where('user_id', $user_id)->first();
-        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+    // Route::get('student/{user_id}/class-details', function ($user_id) {
+    //     $student = \App\Models\Student::where('user_id', $user_id)->first();
+    //     if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-            ->join('classes', 'class_students.class_id', '=', 'classes.id')
-            ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
-            ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
-            ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
-            ->join('users', 'teachers.user_id', '=', 'users.id')
-            ->select([
-                'classes.id as class_id',
-                'classes.class_name',
-                'classes.status as class_status',
-                'subjects.id as subject_id',
-                'subjects.subject_name',
-                'class_subjects.id as class_subject_id',
-                'class_subjects.status as subject_status',
-                'class_subjects.room',
-                'class_subjects.schedule_info',
-                'users.id as teacher_id',
-                'users.full_name as teacher_name',
-            ])
-            ->get();
+    //     $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+    //         ->join('classes', 'class_students.class_id', '=', 'classes.id')
+    //         ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
+    //         ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
+    //         ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
+    //         ->join('users', 'teachers.user_id', '=', 'users.id')
+    //         ->select([
+    //             'classes.id as class_id',
+    //             'classes.class_name',
+    //             'classes.status as class_status',
+    //             'subjects.id as subject_id',
+    //             'subjects.subject_name',
+    //             'class_subjects.id as class_subject_id',
+    //             'class_subjects.status as subject_status',
+    //             'class_subjects.room',
+    //             'class_subjects.schedule_info',
+    //             'users.id as teacher_id',
+    //             'users.full_name as teacher_name',
+    //         ])
+    //         ->get();
 
-        return response()->json(['success' => true, 'data' => $classes]);
-    });
+    //     return response()->json(['success' => true, 'data' => $classes]);
+    // });
 });
 
 
@@ -82,8 +84,6 @@ Route::prefix('public')->group(function () {
 // --- Authenticated APIs ---
 // Đưa route lấy lớp học của student vào auth, lấy user từ token
 // --- Public: student profile ---
-Route::get('/students/{id}/profile', [StudentController::class, 'getProfile']);
-Route::put('/students/{id}/profile', [StudentController::class, 'updateProfile']);
 
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
@@ -107,11 +107,7 @@ Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubject
 
 // --- Authenticated routes ---
 
-Route::post('login', [AuthController::class, 'login']);
 
-Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
-Route::post("/register", [AuthController::class, 'register'])->middleware("admin-account");
-Route::get("/logout", [AuthController::class, 'logout'])->middleware("logout");
 
 
 
