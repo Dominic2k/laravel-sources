@@ -19,8 +19,42 @@ class GoalRepository
     {
         return Goal::where('student_id', $studentId)
             ->where('class_subject_id', $classSubjectId)
-            ->with(['student', 'classSubject'])
-            ->get();
+            ->with([
+                'student.user',
+                'classSubject.subject',
+                'classSubject.class',
+                'classSubject.teacher.user'
+            ])
+            ->get()
+            ->map(function ($goal) {
+                return [
+                    'id' => $goal->id,
+                    'title' => $goal->title,
+                    'description' => $goal->description,
+                    'goal_type' => $goal->goal_type,
+                    'start_date' => $goal->start_date,
+                    'end_date' => $goal->end_date,
+                    'status' => $goal->status,
+                    'priority' => $goal->priority,
+                    'is_private' => $goal->is_private,
+                    'subject' => [
+                        'id' => $goal->classSubject->subject->id,
+                        'name' => $goal->classSubject->subject->subject_name,
+                    ],
+                    'class' => [
+                        'id' => $goal->classSubject->class->id,
+                        'name' => $goal->classSubject->class->class_name,
+                    ],
+                    'teacher' => [
+                        'id' => $goal->classSubject->teacher->user->id,
+                        'name' => $goal->classSubject->teacher->user->full_name,
+                    ],
+                    'room' => $goal->classSubject->room,
+                    'schedule_info' => $goal->classSubject->schedule_info,
+                    'created_at' => $goal->created_at,
+                    'updated_at' => $goal->updated_at,
+                ];
+            });
     }
 
     /**
