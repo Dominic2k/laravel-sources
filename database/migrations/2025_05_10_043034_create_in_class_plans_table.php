@@ -11,7 +11,8 @@ class CreateInClassPlansTable extends Migration
         Schema::create('in_class_plans', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('goal_id')->nullable();
-            // Loại bỏ student_id và class_subject_id vì có thể truy vấn từ goal_id
+            $table->unsignedBigInteger('student_id');
+            $table->unsignedBigInteger('class_subject_id');
             $table->date('date')->nullable();
             $table->string('skills_module', 255)->nullable();
             $table->text('lesson_summary')->nullable();
@@ -22,8 +23,9 @@ class CreateInClassPlansTable extends Migration
             $table->text('additional_notes')->nullable();
             $table->timestamps();
             
-            // Thêm foreign key cho goal_id
-            $table->foreign('goal_id')->references('id')->on('goals')->onDelete('cascade');
+            $table->foreign('goal_id')->references('id')->on('goals')->onDelete('set null');
+            $table->foreign('student_id')->references('user_id')->on('students')->onDelete('cascade');
+            $table->foreign('class_subject_id')->references('id')->on('class_subjects')->onDelete('cascade');
         });
     }
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class StudentController extends Controller
 {
@@ -74,18 +75,17 @@ class StudentController extends Controller
         ]);
     }
 
-    public function getSubjects($userId)
+    public function getSubjects(Request $request)
     {
         try {
-            // Kiểm tra xem student có tồn tại không
-            $student = Student::where('user_id', $userId)->first();
+            $user = Auth::guard('sanctum')->user();
+            $student = \App\Models\Student::where('user_id', $user->id)->first();
             
             if (!$student) {
                 return response()->json(['error' => 'Student not found'], 404);
             }
-            
-            // Lấy danh sách môn học mà sinh viên tham gia
-            $subjects = \App\Models\ClassStudent::where('student_id', $userId)
+
+            $subjects = \App\Models\ClassStudent::where('class_students.student_id', $student->user_id)
                 ->join('classes', 'class_students.class_id', '=', 'classes.id')
                 ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
                 ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
@@ -95,8 +95,6 @@ class StudentController extends Controller
                     'subjects.id as subject_id',
                     'subjects.subject_name',
                     'subjects.description',
-                    'classes.id as class_id',
-                    'classes.class_name',
                     'class_subjects.id as class_subject_id',
                     'class_subjects.status as subject_status',
                     'class_subjects.room',
@@ -104,81 +102,158 @@ class StudentController extends Controller
                     'users.id as teacher_id',
                     'users.full_name as teacher_name',
                 ])
+                ->distinct()
                 ->get();
-                
-            return response()->json([
-                'success' => true,
-                'data' => $subjects
-            ]);
+            return response()->json(['success' => true, 'data' => $subjects]);
         } catch (\Exception $e) {
             return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
             ], 500);
         }
     }
 
-    /////
-     public function getProfile(Request $request)
+    public function getSubjectDetail(Request $request, $subjectId)
     {
-        $user = $request->user();
-        $student = $user->student; 
+        try {
+            $user = Auth::guard('sanctum')->user();
+            $student = \App\Models\Student::where('user_id', $user->id)->first();
+            
+            if (!$student) {
+                return response()->json(['error' => 'Student not found'], 404);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user,
-                'student' => $student
-            ]
-        ]);
+            $subject = \App\Models\ClassStudent::where('class_students.student_id', $student->user_id)
+                ->join('classes', 'class_students.class_id', '=', 'classes.id')
+                ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
+                ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
+                ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
+                ->join('users', 'teachers.user_id', '=', 'users.id')
+                ->where('subjects.id', $subjectId)
+                ->select([
+                    'subjects.id as subject_id',
+                    'subjects.subject_name',
+                    'subjects.description',
+                    'class_subjects.id as class_subject_id',
+                    'class_subjects.status as subject_status',
+                    'class_subjects.room',
+                    'class_subjects.schedule_info',
+                    'users.id as teacher_id',
+                    'users.full_name as teacher_name',
+                ])
+                ->first();
+
+            if (!$subject) {
+                return response()->json(['error' => 'Subject not found'], 404);
+            }
+
+            return response()->json(['success' => true, 'data' => $subject]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getProfile(Request $request)
+    {
+        try {
+            $user = Auth::guard('sanctum')->user();
+            \Log::info('Auth user:', ['user' => $user]);
+            
+            if (!$user) {
+                \Log::error('Unauthorized access attempt');
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $student = $user->student;
+            \Log::info('Student data:', ['student' => $student]);
+            
+            if (!$student) {
+                \Log::error('Student profile not found for user:', ['user_id' => $user->id]);
+                return response()->json(['error' => 'Student profile not found'], 404);
+            }
+
+            $response = [
+                'success' => true,
+                'data' => [
+                    'user' => $user,
+                    'student' => $student
+                ]
+            ];
+            \Log::info('Profile response:', $response);
+            
+            return response()->json($response);
+        } catch (\Exception $e) {
+            \Log::error('Profile error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function updateProfile(Request $request)
     {
-        $user = $request->user();
-        $student = $user->student;
+        try {
+            $user = Auth::guard('sanctum')->user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
 
-        $validated = $request->validate([
-            'full_name' => 'sometimes|string',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:6',
-            'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
-            'admission_date' => 'sometimes|date',
-            'current_semester' => 'sometimes|integer|min:1|max:6',
-        ]);
+            $student = $user->student;
+            if (!$student) {
+                return response()->json(['error' => 'Student profile not found'], 404);
+            }
 
-        if (isset($validated['full_name'])) {
-            $user->full_name = $validated['full_name'];
-        }
-        if (isset($validated['email'])) {
-            $user->email = $validated['email'];
-        }
-        if (isset($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
-        }
+            $validated = $request->validate([
+                'full_name' => 'sometimes|string',
+                'email' => 'sometimes|email|unique:users,email,' . $user->id,
+                'password' => 'sometimes|string|min:6',
+                'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
+                'admission_date' => 'sometimes|date',
+                'current_semester' => 'sometimes|integer|min:1|max:6',
+            ]);
 
-        // Cập nhật thông tin sinh viên
-        if (isset($validated['student_code'])) {
-            $student->student_code = $validated['student_code'];
-        }
-        if (isset($validated['admission_date'])) {
-            $student->admission_date = $validated['admission_date'];
-        }
-        if (isset($validated['current_semester'])) {
-            $student->current_semester = $validated['current_semester'];
-        }
+            if (isset($validated['full_name'])) {
+                $user->full_name = $validated['full_name'];
+            }
+            if (isset($validated['email'])) {
+                $user->email = $validated['email'];
+            }
+            if (isset($validated['password'])) {
+                $user->password = bcrypt($validated['password']);
+            }
 
-        $user->save();
-        $student->save();
+            if (isset($validated['student_code'])) {
+                $student->student_code = $validated['student_code'];
+            }
+            if (isset($validated['admission_date'])) {
+                $student->admission_date = $validated['admission_date'];
+            }
+            if (isset($validated['current_semester'])) {
+                $student->current_semester = $validated['current_semester'];
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user,
-                'student' => $student
-            ]
-        ]);
+            $user->save();
+            $student->save();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'user' => $user,
+                    'student' => $student
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
-
 }
