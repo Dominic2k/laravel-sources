@@ -12,9 +12,16 @@ class SelfStudyPlanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $plans = SelfStudyPlan::orderBy('date', 'desc')->get();
+        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        $plans = SelfStudyPlan::where('student_id', $student->id)
+            ->orderBy('date', 'desc')
+            ->get();
         return response()->json($plans);
     }
 
@@ -23,19 +30,27 @@ class SelfStudyPlanController extends Controller
      */
     public function store(Request $request)
     {
+        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
         $validated = $request->validate([
-            'class_name' => 'required|string|max:255',
+            'goal_id' => 'nullable|exists:goals,id',
             'date' => 'required|date',
-            'lesson' => 'required|string',
-            'time' => 'required|string',
-            'resources' => 'nullable|string',
-            'activities' => 'nullable|string',
-            'concentration' => 'required|string',
-            'plan_follow' => 'required|string',
-            'evaluation' => 'nullable|string',
-            'reinforcing' => 'nullable|string',
+            'skills_module' => 'required|string|max:255',
+            'lesson_summary' => 'required|string',
+            'time_allocation' => 'required|integer',
+            'learning_resources' => 'nullable|string',
+            'learning_activities' => 'nullable|string',
+            'concentration_level' => 'required|integer',
+            'plan_follow_reflection' => 'required|string',
+            'work_evaluation' => 'nullable|string',
+            'reinforcing_techniques' => 'nullable|string',
+            'notes' => 'nullable|string'
         ]);
 
+        $validated['student_id'] = $student->id;
         $plan = SelfStudyPlan::create($validated);
 
         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
@@ -45,9 +60,16 @@ class SelfStudyPlanController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-       $plan = SelfStudyPlan::findOrFail($id);
+        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        $plan = SelfStudyPlan::where('id', $id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
         return response()->json($plan);
     }
 
@@ -56,18 +78,29 @@ class SelfStudyPlanController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
         $validated = $request->validate([
-            'lesson' => 'required|string',
-            'time' => 'required|string',
-            'resources' => 'nullable|string',
-            'activities' => 'nullable|string',
-            'concentration' => 'required|string',
-            'plan_follow' => 'required|string',
-            'evaluation' => 'nullable|string',
-            'reinforcing' => 'nullable|string',
+            'goal_id' => 'nullable|exists:goals,id',
+            'date' => 'required|date',
+            'skills_module' => 'required|string|max:255',
+            'lesson_summary' => 'required|string',
+            'time_allocation' => 'required|integer',
+            'learning_resources' => 'nullable|string',
+            'learning_activities' => 'nullable|string',
+            'concentration_level' => 'required|integer',
+            'plan_follow_reflection' => 'required|string',
+            'work_evaluation' => 'nullable|string',
+            'reinforcing_techniques' => 'nullable|string',
+            'notes' => 'nullable|string'
         ]);
 
-        $plan = SelfStudyPlan::findOrFail($id);
+        $plan = SelfStudyPlan::where('id', $id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
         $plan->update($validated);
 
         return response()->json(['message' => 'Updated successfully', 'data' => $plan]);
@@ -76,22 +109,33 @@ class SelfStudyPlanController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        $plan = SelfStudyPlan::findOrFail($id);
+        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        $plan = SelfStudyPlan::where('id', $id)
+            ->where('student_id', $student->id)
+            ->firstOrFail();
         $plan->delete();
 
         return response()->json(['message' => 'Deleted successfully']);
     }
 
-    public function filterByGoal($classSubjectId)
-    {
-        $plans = SelfStudyPlan::where('id', $classSubjectId)
-            ->orderBy('date', 'desc')
-            ->get();
+    // public function filterByGoal(Request $request, $goalId)
+    // {
+    //     $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+    //     if (!$student) {
+    //         return response()->json(['error' => 'Student not found'], 404);
+    //     }
+    //     $plans = SelfStudyPlan::where('id', $classSubjectId)
+    //         ->orderBy('date', 'desc')
+    //         ->get();
 
-        return response()->json($plans);
-    }
+    //     return response()->json($plans);
+    // }
 
     public function filterByClassSubject($classSubjectId)
 {

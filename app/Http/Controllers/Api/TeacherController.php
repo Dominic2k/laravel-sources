@@ -1,11 +1,13 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Teacher;
 use App\Models\User;
+use App\Models\Classes;
 
 class TeacherController extends Controller
 {
@@ -75,16 +77,34 @@ class TeacherController extends Controller
     }
 
     public function getClasses($user_id)
-    {
-        $teacher = Teacher::with('classes')->where('user_id', $user_id)->first();
+{
+    // Lấy danh sách class_id từ bảng class_subjects
+    $classIds = DB::table('class_subjects')
+                  ->where('teacher_id', $user_id)
+                  ->pluck('class_id')
+                  ->unique();
 
-        if (!$teacher) {
-            return response()->json(['success' => false, 'message' => 'Teacher not found'], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $teacher->classes
-        ]);
+    if ($classIds->isEmpty()) {
+        return response()->json(['data' => []]);
     }
+
+    // Lấy danh sách lớp và đếm số học sinh trong từng lớp
+    $classes = Classes::whereIn('id', $classIds)
+                ->withCount('students')
+                ->get();
+
+    // Định dạng lại để frontend sử dụng được
+    $formatted = $classes->map(function ($class) {
+        return [
+            'class_id' => $class->id,
+            'class_name' => $class->class_name,
+            'student_count' => $class->students_count
+        ];
+    });
+
+    return response()->json([
+        'data' => $formatted
+    ]);
+}
+
 }

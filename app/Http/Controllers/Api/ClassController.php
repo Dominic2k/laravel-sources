@@ -72,20 +72,30 @@ class ClassController extends Controller
         ]);
     }
 
-    public function getStudents($id)
-    {
-        $class = Classes::with('students.user')->find($id);
+    public function getStudents($class_id)
+{
+    $class = \App\Models\Classes::with(['students.user'])->find($class_id);
 
-        if (!$class) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Class not found'
-            ], 404);
-        }
+if (!$class) {
+    return response()->json(['error' => 'Class not found'], 404);
+}
 
-        return response()->json([
-            'success' => true,
-            'data' => $class->students
-        ]);
-    }
+$students = $class->students->map(function ($student) {
+    return [
+        'student_id' => $student->id,
+        'full_name' => optional($student->user)->full_name ?? 'No name',
+        'email' => optional($student->user)->email ?? 'No email',
+    ];
+});
+
+return response()->json([
+    'success' => true,
+    'data' => [
+        'class_name' => $class->class_name,
+        'students' => $students,
+    ]
+]);
+
+}
+
 }
