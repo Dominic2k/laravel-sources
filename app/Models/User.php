@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,7 +11,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
     
     protected $fillable = [
-        'username', 'password', 'email', 'full_name', 'birthday'
+        'username', 'password', 'email', 'full_name', 'birthday', 'role'
     ];
     
     protected $hidden = [
@@ -24,10 +23,6 @@ class User extends Authenticatable
         'last_login' => 'datetime',
     ];
     
-    public function roles()
-    {
-        return $this->hasMany(UserRole::class);
-    }
     
     public function student()
     {
@@ -39,5 +34,6 @@ class User extends Authenticatable
         return $this->hasOne(Teacher::class);
     }
 }
+
 
 

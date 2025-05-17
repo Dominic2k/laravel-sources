@@ -55,33 +55,41 @@ class AchievementController extends Controller
 
 //     return response()->json($achievement, 200);
 // }
-    public function store(Request $request)
-{
-    $validated = $request->validate([
-        'file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        'title' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'class_subject_id' => 'required|integer',
-        'achievement_date' => 'required|date',
-        'semester' => 'required|integer',
-    ]);
+     public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'file_url' => 'required|image|max:5120',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'class_subject_id' => 'required|integer',
+            'achievement_date' => 'required|date',
+            'semester' => 'required|integer'
+        ]);
 
-    $path = $request->file('file')->store('achievements', 'public');
+        // Lưu ảnh
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('achievements', 'public');
+        } else {
+            return response()->json(['message' => 'No file uploaded.'], 400);
+        }
+        $achievement = Achievement::create([
+            // 'student_id' => auth()->id(),
+            'student_id' => $request->student_id,
+            'file_url' => $path,
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'class_subject_id' => $validated['class_subject_id'],
+            'achievement_date' => $validated['achievement_date'],
+            'semester' => $validated['semester'],
+            
+        ]);
 
-    $achievement = Achievement::create([
-        'user_id' => auth()->id(),
-        'file_url' => $path,
-        'title' => $validated['title'],
-        'description' => $validated['description'],
-        'class_subject_id' => $validated['class_subject_id'],
-        'achievement_date' => $validated['achievement_date'],
-        'semester' => $validated['semester'],
-    ]);
-
-    return response()->json($achievement, 201);
-}
-
-
+        return response()->json([
+            'message' => 'Achievement uploaded successfully!',
+            'data' => $achievement
+        ], 201);
+    }
 
     // Cập nhật thành tựu
     public function update(Request $request, $id)

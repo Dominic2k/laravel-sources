@@ -3,135 +3,100 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Services\GoalService;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Models\Goal;
+
 
 class GoalController extends Controller
 {
     protected $goalService;
 
-    /**
-     * Khởi tạo controller với service
-     *
-     * @param GoalService $goalService
-     */
     public function __construct(GoalService $goalService)
     {
         $this->goalService = $goalService;
     }
 
-    /**
-     * Lấy danh sách goals theo sinh viên và môn học
-     *
-     * @param int $studentId
-     * @param int $classSubjectId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getGoalsBySubject($studentId, $classSubjectId)
+    private function getStudentFromRequest(Request $request)
     {
         try {
-            $result = $this->goalService->getGoalsBySubject($studentId, $classSubjectId);
-            return response()->json($result);
+            $user = $request->user();
+            if (!$user) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
+
+            $student = \App\Models\Student::where('user_id', $user->id)->first();
+            if (!$student) {
+                return response()->json(['error' => 'Student profile not found'], 404);
+            }
+            return $student;
         } catch (\Exception $e) {
+            Log::error('Error in getStudentFromRequest: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    public function getGoalsBySubject(Request $request, $classSubjectId)
+    {
+        try {
+            $student = $this->getStudentFromRequest($request);
+            if ($student instanceof \Illuminate\Http\JsonResponse) {
+                return $student;
+            }
+
+            $goals = $this->goalService->getGoalsBySubject($student->user_id, $classSubjectId);
+            return response()->json(['success' => true, 'data' => $goals]);
+        } catch (\Exception $e) {
+            Log::error('Error in getGoalsBySubject: ' . $e->getMessage());
             return $this->handleException($e);
         }
     }
 
-    /**
-     * Lấy chi tiết goal
-     *
-     * @param int $studentId
-     * @param int $goalId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getGoalDetail($studentId, $goalId)
+    public function getGoalDetail(Request $request, $goalId)
     {
         try {
-            $result = $this->goalService->getGoalDetail($studentId, $goalId);
-            return response()->json($result);
+            $student = $this->getStudentFromRequest($request);
+            if ($student instanceof \Illuminate\Http\JsonResponse) {
+                return $student;
+            }
+
+            $goal = $this->goalService->getGoalDetail($student, $goalId);
+            return response()->json(['success' => true, 'data' => $goal]);
         } catch (\Exception $e) {
+            Log::error('Error in getGoalDetail: ' . $e->getMessage());
             return $this->handleException($e);
         }
     }
 
-    /**
-     * Tạo goal mới
-     *
-     * @param Request $request
-     * @param int $studentId
-     * @param int $classSubjectId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function createGoalForSubject(Request $request, $studentId, $classSubjectId)
+    public function createGoalForSubject(Request $request, $classSubjectId)
     {
         try {
-            $result = $this->goalService->createGoal($request, $studentId, $classSubjectId);
-            return response()->json($result, 201);
+            $student = $this->getStudentFromRequest($request);
+            if ($student instanceof \Illuminate\Http\JsonResponse) {
+                return $student;
+            }
+
+            $goal = $this->goalService->createGoalForSubject($student, $classSubjectId, $request->all());
+            return response()->json(['success' => true, 'data' => $goal], 201);
         } catch (\Exception $e) {
+            Log::error('Error in createGoalForSubject: ' . $e->getMessage());
             return $this->handleException($e);
         }
     }
 
-    /**
-     * Cập nhật goal
-     *
-     * @param Request $request
-     * @param int $studentId
-     * @param int $goalId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function updateGoal(Request $request, $studentId, $goalId)
+    protected function handleException(\Exception $e)
     {
-        try {
-            $result = $this->goalService->updateGoal($request, $studentId, $goalId);
-            return response()->json($result);
-        } catch (\Exception $e) {
-            return $this->handleException($e);
+        Log::error('GoalController Error: ' . $e->getMessage());
+        
+        $statusCode = $e->getCode() ?: 500;
+        if ($statusCode < 100 || $statusCode > 599) {
+            $statusCode = 500;
         }
-    }
-
-    /**
-     * Xóa goal
-     *
-     * @param int $studentId
-     * @param int $goalId
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function deleteGoal($studentId, $goalId)
-    {
-        try {
-            $result = $this->goalService->deleteGoal($studentId, $goalId);
-            return response()->json($result);
-        } catch (\Exception $e) {
-            return $this->handleException($e);
-        }
-    }
-
-    /**
-     * Xử lý exception
-     *
-     * @param \Exception $e
-     * @return \Illuminate\Http\JsonResponse
-     */
-    private function handleException(\Exception $e)
-    {
-        if ($e instanceof ValidationException) {
-            return response()->json([
-                'success' => false,
-                'errors' => $e->errors()
-            ], 422);
-        }
-
-        $statusCode = method_exists($e, 'getCode') && $e->getCode() >= 400 && $e->getCode() < 600 
-            ? $e->getCode() 
-            : 500;
 
         return response()->json([
             'success' => false,
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine()
+            'error' => $e->getMessage()
         ], $statusCode);
     }
 }
