@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SelfStudyPlan;
 use App\Models\Goal;
+use App\Models\Student;
 
 class SelfStudyPlanController extends Controller
 {
@@ -14,7 +15,7 @@ class SelfStudyPlanController extends Controller
      */
     public function index(Request $request)
     {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
@@ -22,6 +23,7 @@ class SelfStudyPlanController extends Controller
         $plans = SelfStudyPlan::where('student_id', $student->id)
             ->orderBy('date', 'desc')
             ->get();
+
         return response()->json($plans);
     }
 
@@ -30,13 +32,13 @@ class SelfStudyPlanController extends Controller
      */
     public function store(Request $request)
     {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
         $validated = $request->validate([
-            'goal_id' => 'nullable|exists:goals,id',
+            'subject_id' => 'required|exists:subjects,id',
             'date' => 'required|date',
             'skills_module' => 'required|string|max:255',
             'lesson_summary' => 'required|string',
@@ -51,6 +53,7 @@ class SelfStudyPlanController extends Controller
         ]);
 
         $validated['student_id'] = $student->id;
+
         $plan = SelfStudyPlan::create($validated);
 
         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
@@ -62,14 +65,19 @@ class SelfStudyPlanController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
         $plan = SelfStudyPlan::where('id', $id)
             ->where('student_id', $student->id)
-            ->firstOrFail();
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
         return response()->json($plan);
     }
 
@@ -78,13 +86,21 @@ class SelfStudyPlanController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
+        $plan = SelfStudyPlan::where('id', $id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
         $validated = $request->validate([
-            'goal_id' => 'nullable|exists:goals,id',
+            'subject_id' => 'required|exists:subjects,id',
             'date' => 'required|date',
             'skills_module' => 'required|string|max:255',
             'lesson_summary' => 'required|string',
@@ -98,9 +114,6 @@ class SelfStudyPlanController extends Controller
             'notes' => 'nullable|string'
         ]);
 
-        $plan = SelfStudyPlan::where('id', $id)
-            ->where('student_id', $student->id)
-            ->firstOrFail();
         $plan->update($validated);
 
         return response()->json(['message' => 'Updated successfully', 'data' => $plan]);
@@ -111,14 +124,19 @@ class SelfStudyPlanController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $student = \App\Models\Student::where('user_id', $request->user()->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
         $plan = SelfStudyPlan::where('id', $id)
             ->where('student_id', $student->id)
-            ->firstOrFail();
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
         $plan->delete();
 
         return response()->json(['message' => 'Deleted successfully']);
@@ -137,12 +155,28 @@ class SelfStudyPlanController extends Controller
     //     return response()->json($plans);
     // }
 
-    public function filterByClassSubject($classSubjectId)
-{
-    $plans = SelfStudyPlan::with('goal.classSubject')
-            ->whereHas('goal', function($query) use ($classSubjectId) {
-                $query->where('class_subject_id', $classSubjectId);
-            })
+//     public function filterByClassSubject($classSubjectId)
+// {
+//     $plans = SelfStudyPlan::with('goal.classSubject')
+//             ->whereHas('goal', function($query) use ($classSubjectId) {
+//                 $query->where('class_subject_id', $classSubjectId);
+//             })
+//             ->orderBy('date', 'desc')
+//             ->get();
+
+//         return response()->json($plans);
+//     }
+
+    // Lọc kế hoạch theo subject_id
+    public function filterBySubject(Request $request, $subjectId)
+    {
+        $student = Student::where('user_id', $request->user()->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        $plans = SelfStudyPlan::where('student_id', $student->id)
+            ->where('subject_id', $subjectId)
             ->orderBy('date', 'desc')
             ->get();
 

@@ -14,15 +14,21 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, $role)
     {
         // Lấy user từ token (Sanctum xử lý sẵn)
-        $user = Auth::user();
+        $user = Auth::guard('sanctum')->user();
 
         if (!$user) {
             return response()->json(['message' => 'Token không hợp lệ hoặc không tồn tại'], 401);
         }
-
-        if ($user->role === $role) {
+        
+        if (!$role) {
             return $next($request);
         }
+
+        if (Auth::guard('sanctum')->user()->role === $role) {
+            return $next($request);
+        }
+
+        
 
         return response()->json(['message' => 'Forbidden - Không có quyền truy cập'], 403);
     }

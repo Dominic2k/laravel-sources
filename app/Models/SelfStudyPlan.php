@@ -21,6 +21,7 @@ class SelfStudyPlan extends Model
         'plan_follow',
         'evaluation',
         'reinforcing',
+        'notes'
     ];
 
     public function class()
@@ -36,5 +37,10 @@ class SelfStudyPlan extends Model
     public function goal()
     {
         return $this->belongsTo(Goal::class, 'goal_id');
+    }
+
+    public function subject() 
+    {
+        return $this->belongsTo(Subject::class,'subject_id');
     }
 }
