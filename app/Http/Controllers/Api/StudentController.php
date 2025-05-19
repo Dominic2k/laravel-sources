@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class StudentController extends Controller
 {
@@ -160,18 +162,14 @@ class StudentController extends Controller
     {
         try {
             $user = Auth::guard('sanctum')->user();
-            \Log::info('Auth user:', ['user' => $user]);
             
             if (!$user) {
-                \Log::error('Unauthorized access attempt');
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
 
             $student = $user->student;
-            \Log::info('Student data:', ['student' => $student]);
             
             if (!$student) {
-                \Log::error('Student profile not found for user:', ['user_id' => $user->id]);
                 return response()->json(['error' => 'Student profile not found'], 404);
             }
 
@@ -182,14 +180,9 @@ class StudentController extends Controller
                     'student' => $student
                 ]
             ];
-            \Log::info('Profile response:', $response);
             
             return response()->json($response);
         } catch (\Exception $e) {
-            \Log::error('Profile error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
             return response()->json([
                 'error' => 'Internal Server Error',
                 'message' => $e->getMessage()
