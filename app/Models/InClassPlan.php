@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class InClassPlan extends Model
 {
-    //use HasFactory;
+    use HasFactory;
+
     protected $fillable = [
         'goal_id',
         'student_id',
@@ -20,4 +22,25 @@ class InClassPlan extends Model
         'problem_solved',
         'additional_notes',
     ];
+
+    protected $casts = [
+        'date' => 'date',
+        'problem_solved' => 'boolean',
+        'self_assessment' => 'integer',
+    ];
+
+    public function student()
+    {
+        return $this->belongsTo(Student::class, 'student_id', 'user_id');
+    }
+
+    public function goal()
+    {
+        return $this->belongsTo(Goal::class);
+    }
+
+    public function classSubject()
+    {
+        return $this->belongsTo(ClassSubject::class);
+    }
 }

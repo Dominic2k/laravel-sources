@@ -85,6 +85,41 @@ class GoalController extends Controller
         }
     }
 
+    public function updateGoal(Request $request, $goalId)   
+    {
+        try {
+            $student = $this->getStudentFromRequest($request);
+            if ($student instanceof \Illuminate\Http\JsonResponse) {
+                return $student;
+            }
+
+            Log::info('Student: ' . $student);
+
+            $goal = $this->goalService->updateGoal($student, $goalId, $request->all());
+            return response()->json(['success' => true, 'data' => $goal]);
+        } catch (\Exception $e) {
+            Log::error('Error in updateGoal: ' . $e->getMessage());
+            return $this->handleException($e);
+        }
+    }
+
+    public function deleteGoal(Request $request, $goalId)
+    {
+        try {
+            $student = $this->getStudentFromRequest($request);
+            if ($student instanceof \Illuminate\Http\JsonResponse) {
+                return $student;
+            }
+
+            $result = $this->goalService->deleteGoal($student, $goalId);
+            return response()->json(['success' => true, 'message' => 'Goal deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error('Error in deleteGoal: ' . $e->getMessage());
+            return $this->handleException($e);
+        }
+    }
+
+
     protected function handleException(\Exception $e)
     {
         Log::error('GoalController Error: ' . $e->getMessage());
