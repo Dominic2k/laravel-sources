@@ -13,7 +13,8 @@ use App\Http\Controllers\Api\{
     UserController,
     InClassPlanController,
     SelfStudyPlanController,
-    AuthController
+    AuthController,
+    AchievementController
 };
 use Illuminate\Support\Facades\Auth;
 
@@ -70,15 +71,130 @@ Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubject
 
 // --- Authenticated routes ---
 Route::middleware('auth:sanctum')->group(function () {
-    // --- Student Classes ---
-    Route::get('/student/classes', [StudentClassController::class, 'getClasses']);
-    Route::get('/student/class-details', [StudentClassController::class, 'getClassDetails']);
+    Route::get('/student/classes', function (Request $request) {
+        $user = Auth::guard('sanctum')->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-    // --- Student Subjects ---
-    Route::get('/student/subjects', [StudentController::class, 'getSubjects']);
-    Route::get('/student/subjects/{subjectId}/detail', [StudentController::class, 'getSubjectDetail']);
+        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+            ->join('classes', 'class_students.class_id', '=', 'classes.id')
+            ->select('classes.*')
+            ->get();
 
-    // --- Student Goals ---
+        return response()->json(['success' => true, 'data' => $classes]);
+    });
+
+    Route::get('/student/class-details', function (Request $request) {
+        $user = Auth::guard('sanctum')->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+
+        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+            ->join('classes', 'class_students.class_id', '=', 'classes.id')
+            ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
+            ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
+            ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
+            ->join('users', 'teachers.user_id', '=', 'users.id')
+            ->select([
+                'classes.id as class_id',
+                'classes.class_name',
+                'classes.status as class_status',
+                'subjects.id as subject_id',
+                'subjects.subject_name',
+                'class_subjects.id as class_subject_id',
+                'class_subjects.status as subject_status',
+                'class_subjects.room',
+                'class_subjects.schedule_info',
+                'users.id as teacher_id',
+                'users.full_name as teacher_name',
+            ])
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $classes]);
+    });
+
+    // Lấy danh sách môn học của sinh viên đã đăng nhập
+    Route::get('/student/subjects', function (Request $request) {
+        try {
+            $user = Auth::guard('sanctum')->user();
+            $student = \App\Models\Student::where('user_id', $user->id)->first();
+            
+            if (!$student) {
+                return response()->json(['error' => 'Student not found'], 404);
+            }
+
+            $subjects = \App\Models\ClassStudent::where('class_students.student_id', $student->user_id)
+                ->join('classes', 'class_students.class_id', '=', 'classes.id')
+                ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
+                ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
+                ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
+                ->join('users', 'teachers.user_id', '=', 'users.id')
+                ->select([
+                    'subjects.id as subject_id',
+                    'subjects.subject_name',
+                    'subjects.description',
+                    'class_subjects.id as class_subject_id',
+                    'class_subjects.status as subject_status',
+                    'class_subjects.room',
+                    'class_subjects.schedule_info',
+                    'users.id as teacher_id',
+                    'users.full_name as teacher_name',
+                ])
+                ->distinct()
+                ->get();
+            return response()->json(['success' => true, 'data' => $subjects]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
+
+    // Lấy thông tin chi tiết của một subject
+    Route::get('/student/subjects/{subjectId}/detail', function (Request $request, $subjectId) {
+        try {
+            $user = Auth::guard('sanctum')->user();
+            $student = \App\Models\Student::where('user_id', $user->id)->first();
+            
+            if (!$student) {
+                return response()->json(['error' => 'Student not found'], 404);
+            }
+
+            $subject = \App\Models\ClassStudent::where('class_students.student_id', $student->user_id)
+                ->join('classes', 'class_students.class_id', '=', 'classes.id')
+                ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
+                ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
+                ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
+                ->join('users', 'teachers.user_id', '=', 'users.id')
+                ->where('subjects.id', $subjectId)
+                ->select([
+                    'subjects.id as subject_id',
+                    'subjects.subject_name',
+                    'subjects.description',
+                    'class_subjects.id as class_subject_id',
+                    'class_subjects.status as subject_status',
+                    'class_subjects.room',
+                    'class_subjects.schedule_info',
+                    'users.id as teacher_id',
+                    'users.full_name as teacher_name',
+                ])
+                ->first();
+
+            if (!$subject) {
+                return response()->json(['error' => 'Subject not found'], 404);
+            }
+
+            return response()->json(['success' => true, 'data' => $subject]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Internal Server Error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
+    // --- Goals ---
     Route::get('/student/subjects/{classSubjectId}/goals', [GoalController::class, 'getGoalsBySubject']);
     Route::get('/student/goals/{goalId}', [GoalController::class, 'getGoalDetail']);
     Route::post('/student/subjects/{classSubjectId}/goals', [GoalController::class, 'createGoalForSubject']);
@@ -115,3 +231,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/profile', [StudentController::class, 'getProfile']);
     Route::put('/student/profile', [StudentController::class, 'updateProfile']);    
 });
+
+Route::apiResource('achievements', AchievementController::class);
