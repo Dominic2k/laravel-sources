@@ -15,7 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'student-account' => App\Http\Middleware\RoleMiddleware::class.":student",
             'teacher-account' => App\Http\Middleware\RoleMiddleware::class.":student",
-            'admin-account' => App\Http\Middleware\RoleMiddleware::class.":student"
+            'admin-account' => App\Http\Middleware\RoleMiddleware::class.":student",
+            "logout" =>App\Http\Middleware\RoleMiddleware::class.":"
         ]);
             //
     })

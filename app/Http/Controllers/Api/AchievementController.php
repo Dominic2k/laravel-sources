@@ -4,14 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Models\Achievement;
+use Illuminate\Support\Facades\Auth;
+
 
 class AchievementController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index() 
     {
         $achievements = Achievement::all();
         return response()->json($achievements);
@@ -19,6 +22,7 @@ class AchievementController extends Controller
 
     // Lấy thành tựu theo id
     public function show($id)
+
     {
         $achievement = Achievement::find($id);
 
@@ -58,8 +62,7 @@ class AchievementController extends Controller
      public function store(Request $request)
     {
         $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'file_url' => 'required|image|max:5120',
+            'file_url' => 'required|image|max:10120',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'class_subject_id' => 'required|integer',
@@ -68,15 +71,23 @@ class AchievementController extends Controller
         ]);
 
         // Lưu ảnh
-        if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('achievements', 'public');
+        if ($request->hasFile('file_url')) {
+            $file = $request->file('file_url');
+            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $uploadPath = public_path('uploads/achievements');
+            $file->move($uploadPath, $fileName);
+            $imageUrl = asset('uploads/achievements/' . $fileName);
+
+
         } else {
             return response()->json(['message' => 'No file uploaded.'], 400);
         }
+
+
         $achievement = Achievement::create([
             // 'student_id' => auth()->id(),
-            'student_id' => $request->student_id,
-            'file_url' => $path,
+            'student_id' => Auth::guard('sanctum')->user()->id,
+            'file_url' => $imageUrl,
             'title' => $validated['title'],
             'description' => $validated['description'],
             'class_subject_id' => $validated['class_subject_id'],
