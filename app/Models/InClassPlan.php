@@ -10,9 +10,8 @@ class InClassPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'goal_id',
         'student_id',
-        'class_subject_id',
+        'subject_id',
         'date',
         'skills_module',
         'lesson_summary',
@@ -34,13 +33,9 @@ class InClassPlan extends Model
         return $this->belongsTo(Student::class, 'student_id', 'user_id');
     }
 
-    public function goal()
+    public function subject()
     {
-        return $this->belongsTo(Goal::class);
+        return $this->belongsTo(InClassPlan::class);
     }
 
-    public function classSubject()
-    {
-        return $this->belongsTo(ClassSubject::class);
-    }
 }

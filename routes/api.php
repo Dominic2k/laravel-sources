@@ -89,20 +89,34 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // --- Subject-based Plans ---
-    Route::prefix('student/subjects/{classSubjectId}')->group(function () {
-        // In Class Plans
-        Route::get('in-class-plans', [InClassPlanController::class, 'getPlansBySubject']);
-        Route::post('in-class-plans', [InClassPlanController::class, 'store']);
-        Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
-        Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
-        Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
+    // Route::prefix('student/subjects/{classSubjectId}')->group(function () {
+    //     // In Class Plans
+    //     Route::get('in-class-plans', [InClassPlanController::class, 'getPlansBySubject']);
+    //     Route::post('in-class-plans', [InClassPlanController::class, 'store']);
+    //     Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
+    //     Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
+    //     Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
 
-        // Self Study Plans
-        Route::get('self-study-plans', [SelfStudyPlanController::class, 'getPlansBySubject']);
-        Route::post('self-study-plans', [SelfStudyPlanController::class, 'store']);
-        Route::get('self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
-        Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
-        Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
+    //     // Self Study Plans
+    //     Route::get('self-study-plans', [SelfStudyPlanController::class, 'getPlansBySubject']);
+    //     Route::post('self-study-plans', [SelfStudyPlanController::class, 'store']);
+    //     Route::get('self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
+    //     Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
+    //     Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
+    // });
+
+        Route::prefix('student/subjects/{subjectId}')->group(function () {
+            Route::get('in-class-plans', [InClassPlanController::class, 'indexBySubject']);
+            Route::post('in-class-plans', [InClassPlanController::class, 'store']);
+            Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
+            Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
+            Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
+
+            Route::get('self-study-plans', [SelfStudyPlanController::class, 'getPlansBySubject']);
+            Route::post('self-study-plans', [SelfStudyPlanController::class, 'store']);
+            Route::get('self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
+            Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
+            Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
     });
 
     // --- Goal-based Plans ---
