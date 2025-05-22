@@ -35,6 +35,8 @@ Route::prefix('public')->group(function () {
     Route::apiResource('users', UserController::class)->only(['index', 'show']);
     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
     Route::apiResource('self-study-plans', SelfStudyPlanController::class);
+    Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
+
 
     // Danh sách lớp học của sinh viên theo user_id
     Route::get('student/{user_id}/classes', function ($user_id) {
@@ -108,6 +110,7 @@ Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubject
 
 // --- Authenticated routes ---
 
+    Route::apiResource('teacher-tags', TeacherTagController::class);    
 
 
 
@@ -125,6 +128,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         return response()->json(['success' => true, 'data' => $classes]);
     });
+    
 
     Route::get('/student/class-details', function (Request $request) {
         $user = Auth::guard('sanctum')->user();
@@ -324,6 +328,4 @@ Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubj
 });
 
 
-//Tag teacher route
-Route::apiResource('teacher-tags', TeacherTagController::class);
-Route::put('teacher-tags/{id}/resolve', [TeacherTagController::class, 'resolve']);
+

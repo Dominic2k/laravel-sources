@@ -31,4 +31,9 @@ class TeacherTag extends Model
     {
         return $this->belongsTo(Student::class, 'tagged_by', 'user_id');
     }
+
+    public function teacherUser()
+    {
+        return $this->belongsTo(User::class, 'teacher_id', 'id');
+    }
 }
