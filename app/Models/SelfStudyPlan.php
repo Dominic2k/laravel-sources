@@ -11,8 +11,9 @@ class SelfStudyPlan extends Model
 
     protected $fillable = [
         'goal_id',
-        'class_name',
+        'subject_id',
         'date',
+        'module',
         'lesson',
         'time',
         'resources',

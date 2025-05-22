@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\{
     AchievementController,
     AuthController
 };
+use App\Models\SelfStudyPlan;
 use Illuminate\Support\Facades\Auth;
 
 // --- Auth ---
@@ -88,8 +89,6 @@ Route::prefix('public')->group(function () {
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
 
-// API mở rộng: lọc theo class_name
-Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
 
 // --- Student Goals (Public) ---
 Route::prefix('student/{student_id}')
@@ -240,19 +239,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/goals/{goalId}', [GoalController::class, 'getGoalDetail']);
     Route::post('/student/subjects/{classSubjectId}/goals', [GoalController::class, 'createGoalForSubject']);
 
+
+    Route::apiResource('self-study-plan', SelfStudyPlanController::class);
+
     // --- Self Study Plans ---
-    Route::get('/student/self-study-plans', [SelfStudyPlanController::class, 'index']);
-    Route::post('/student/self-study-plans', [SelfStudyPlanController::class, 'store']);
+    Route::middleware('auth:sanctum')->group(function () {
+    // Route::get('/student/subjects/{subJectId}/self-study-plans', [SelfStudyPlanController::class, 'index']);
+    Route::post('/student/subjects/{subjectId}/self-study-plans', [SelfStudyPlanController::class, 'storeBySubject']);
     Route::get('/student/self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
     Route::put('/student/self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
     Route::delete('/student/self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
-    Route::get('/student/goals/{goalId}/self-study-plans', [SelfStudyPlanController::class, 'filterByGoal']);
-
-    // Lọc SelfStudyPlans theo Goal
-    Route::get('/student/goals/{goalId}/self-study-plans', [SelfStudyPlanController::class, 'filterByGoal']);
-
-    // 🔥 MỚI: Lọc SelfStudyPlans theo Subject
     Route::get('/student/subjects/{subjectId}/self-study-plans', [SelfStudyPlanController::class, 'filterBySubject']);
+    });
 
     // --- In Class Plans ---
     Route::get('/student/in-class-plans', [InClassPlanController::class, 'index']);
@@ -315,7 +313,7 @@ Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubj
             $student->current_semester = $validated['current_semester'];
         }
 
-        $user->save();
+        // $user->save();
         $student->save();
 
         return response()->json([
