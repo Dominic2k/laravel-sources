@@ -59,8 +59,7 @@ class AchievementController extends Controller
 
 //     return response()->json($achievement, 200);
 // }
-     public function store(Request $request)
-    {
+    public function store(Request $request) {
         $validated = $request->validate([
             'file_url' => 'required|image|max:10120',
             'title' => 'required|string|max:255',
