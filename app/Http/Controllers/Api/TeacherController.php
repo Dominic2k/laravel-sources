@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Teacher;
 use App\Models\User;
+  use Illuminate\Support\Facades\DB;
 
 class TeacherController extends Controller
 {
@@ -73,4 +74,18 @@ class TeacherController extends Controller
             'message' => 'Teacher deleted successfully'
         ]);
     }
+
+
+public function getTeachers()
+{
+    $teachers = DB::table('teachers')
+        ->join('users', 'teachers.user_id', '=', 'users.id')
+        ->where('users.role', 'teacher')
+        ->select('teachers.user_id as id', 'users.full_name')
+        ->orderBy('users.full_name')
+        ->get();
+
+    return response()->json($teachers);
+}
+
 }
