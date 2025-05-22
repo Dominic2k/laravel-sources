@@ -50,43 +50,7 @@ Route::prefix('public')->group(function () {
 
         return response()->json(['success' => true, 'data' => $classes]);
     });
-
-    // Lấy chi tiết lớp học kèm môn học và giáo viên
-    // Route::get('student/{user_id}/class-details', function ($user_id) {
-    //     $student = \App\Models\Student::where('user_id', $user_id)->first();
-    //     if (!$student) return response()->json(['error' => 'Student not found'], 404);
-
-    //     $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-    //         ->join('classes', 'class_students.class_id', '=', 'classes.id')
-    //         ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
-    //         ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
-    //         ->join('teachers', 'class_subjects.teacher_id', '=', 'teachers.user_id')
-    //         ->join('users', 'teachers.user_id', '=', 'users.id')
-    //         ->select([
-    //             'classes.id as class_id',
-    //             'classes.class_name',
-    //             'classes.status as class_status',
-    //             'subjects.id as subject_id',
-    //             'subjects.subject_name',
-    //             'class_subjects.id as class_subject_id',
-    //             'class_subjects.status as subject_status',
-    //             'class_subjects.room',
-    //             'class_subjects.schedule_info',
-    //             'users.id as teacher_id',
-    //             'users.full_name as teacher_name',
-    //         ])
-    //         ->get();
-
-    //     return response()->json(['success' => true, 'data' => $classes]);
-    // });
 });
-
-
-
-
-// --- Authenticated APIs ---
-// Đưa route lấy lớp học của student vào auth, lấy user từ token
-// --- Public: student profile ---
 
 // --- In-class plans ---
 Route::apiResource('in-class-plans', InClassPlanController::class);
@@ -245,20 +209,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/goals/{goalId}', [GoalController::class, 'getGoalDetail']);
     Route::post('/student/subjects/{classSubjectId}/goals', [GoalController::class, 'createGoalForSubject']);
 
-    // --- Self Study Plans ---
-    Route::get('/student/self-study-plans', [SelfStudyPlanController::class, 'index']);
-    Route::post('/student/self-study-plans', [SelfStudyPlanController::class, 'store']);
-    Route::get('/student/self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
-    Route::put('/student/self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
-    Route::delete('/student/self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
-    Route::get('/student/goals/{goalId}/self-study-plans', [SelfStudyPlanController::class, 'filterByGoal']);
+    Route::get('/student/goals/{goalId}', [GoalController::class, 'getGoalDetail']);
+    Route::put('/student/goals/{goalId}', [GoalController::class, 'updateGoal']);
+    Route::delete('/student/goals/{goalId}', [GoalController::class, 'deleteGoal']);
 
-    // --- In Class Plans ---
-    Route::get('/student/in-class-plans', [InClassPlanController::class, 'index']);
-    Route::post('/student/in-class-plans', [InClassPlanController::class, 'store']);
-    Route::get('/student/in-class-plans/{id}', [InClassPlanController::class, 'show']);
-    Route::put('/student/in-class-plans/{id}', [InClassPlanController::class, 'update']);
-    Route::delete('/student/in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
+
+    // --- Subject-based Plans ---
+    Route::prefix('student/subjects/{classSubjectId}')->group(function () {
+        // In Class Plans
+        Route::get('in-class-plans', [InClassPlanController::class, 'getPlansBySubject']);
+        Route::post('in-class-plans', [InClassPlanController::class, 'store']);
+        Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
+        Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
+        Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
 
 
 // --- Achievements ---
@@ -328,4 +291,4 @@ Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubj
 });
 
 
-
+});
