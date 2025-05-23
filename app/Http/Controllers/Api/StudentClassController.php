@@ -12,18 +12,33 @@ use App\Models\ClassSubject;
 
 class StudentClassController extends Controller
 {
-    public function getClasses(Request $request)
+    public function getClasses(Request $request, $userId = null)
     {
-        // Get student_id from authenticated user or from request
-        $studentId = Auth::id();
-        
-        // If user_id is provided in request and user is admin, use that instead
-        if ($request->has('user_id') && Auth::user()->role === 'admin') {
-            $studentId = $request->input('user_id');
-        }
-        
-        // Get all classes the student is enrolled in with related information
-        $classes = ClassStudent::where('student_id', $studentId)
+        // Nếu có userId từ public route thì sử dụng, ngược lại lấy từ token
+        $user = $userId ? User::find($userId) : Auth::guard('sanctum')->user();
+        if (!$user) return response()->json(['error' => 'User not found'], 404);
+
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+
+        $classes = ClassStudent::where('student_id', $student->id)
+            ->join('classes', 'class_students.class_id', '=', 'classes.id')
+            ->select('classes.*')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $classes]);
+    }
+
+    public function getClassDetails(Request $request, $userId = null)
+    {
+        // Nếu có userId từ public route thì sử dụng, ngược lại lấy từ token
+        $user = $userId ? User::find($userId) : Auth::guard('sanctum')->user();
+        if (!$user) return response()->json(['error' => 'User not found'], 404);
+
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+
+        $classes = ClassStudent::where('student_id', $student->id)
             ->join('classes', 'class_students.class_id', '=', 'classes.id')
             ->join('class_subjects', 'classes.id', '=', 'class_subjects.class_id')
             ->join('subjects', 'class_subjects.subject_id', '=', 'subjects.id')
@@ -41,13 +56,9 @@ class StudentClassController extends Controller
                 'class_subjects.schedule_info',
                 'users.id as teacher_id',
                 'users.full_name as teacher_name',
-                // You would need to add avatar field to users table if needed
             ])
             ->get();
-            
-        return response()->json([
-            'success' => true,
-            'data' => $classes
-        ]);
+
+        return response()->json(['success' => true, 'data' => $classes]);
     }
 }

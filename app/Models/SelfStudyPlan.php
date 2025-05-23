@@ -10,7 +10,6 @@ class SelfStudyPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'goal_id',
         'subject_id',
         'date',
         'module',
@@ -32,7 +31,7 @@ class SelfStudyPlan extends Model
 
     public function student()
     {
-         return $this->belongsTo(Student::class, 'student_id');
+        return $this->belongsTo(Student::class, 'student_id', 'user_id');
     }
 
     public function goal()

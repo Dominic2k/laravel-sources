@@ -72,30 +72,32 @@ class ClassController extends Controller
         ]);
     }
 
-    public function getStudents($class_id)
-{
-    $class = \App\Models\Classes::with(['students.user'])->find($class_id);
+    public function getStudents($classId)
+    {
+        // Tìm lớp học và load danh sách sinh viên + thông tin người dùng
+        $class = \App\Models\Classes::with(['students.user'])->find($classId);
 
-if (!$class) {
-    return response()->json(['error' => 'Class not found'], 404);
-}
+        if (!$class) {
+            return response()->json(['error' => 'Class not found'], 404);
+        }
 
-$students = $class->students->map(function ($student) {
-    return [
-        'student_id' => $student->id,
-        'full_name' => optional($student->user)->full_name ?? 'No name',
-        'email' => optional($student->user)->email ?? 'No email',
-    ];
-});
+        $students = $class->students->map(function ($student) {
+            return [
+                'student_id' => $student->id,
+                'full_name' => optional($student->user)->full_name ?? 'No name',
+                'email' => optional($student->user)->email ?? 'No email',
+            ];
+        });
 
-return response()->json([
-    'success' => true,
-    'data' => [
-        'class_name' => $class->class_name,
-        'students' => $students,
-    ]
-]);
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'class_name' => $class->class_name,
+                'students' => $students,
+            ]
+        ]);
+    }
 
-}
+
 
 }

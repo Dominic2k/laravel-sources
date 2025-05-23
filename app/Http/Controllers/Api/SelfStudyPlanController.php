@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SelfStudyPlan;
-use App\Models\Goal;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
+use App\Models\Subject;
 
 class SelfStudyPlanController extends Controller
 {
@@ -21,8 +22,13 @@ class SelfStudyPlanController extends Controller
         }
 
         $plans = SelfStudyPlan::where('student_id', $student->id)
+            ->with(['goal'])
             ->orderBy('date', 'desc')
             ->get();
+        return response()->json([
+            'success' => true,
+            'data' => $plans
+        ]);
 
         return response()->json($plans);
     }
@@ -30,15 +36,15 @@ class SelfStudyPlanController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $student = Student::where('user_id', $request->user()->id)->first();
-        if (!$student) {
-            return response()->json(['error' => 'Student not found'], 404);
+    public function store(Request $request, $subjectId)
+{
+    // Kiểm tra subject có tồn tại không
+    if (!Subject::where('id', $subjectId)->exists()) {
+            return response()->json(['error' => 'Subject not found'], 404);
         }
 
         $validated = $request->validate([
-            'subject_id' => 'nullable|exists:subjects,id',
+            'subject_id' => 'required|integer',
             'date' => 'required|date',
             'module' => 'required|string|max:255',
             'lesson' => 'required|string',
@@ -52,13 +58,13 @@ class SelfStudyPlanController extends Controller
             'notes' => 'nullable|string'
         ]);
 
-        $validated['student_id'] = $student->id;
+        $validated['subject_id'] = $subjectId;
 
         $plan = SelfStudyPlan::create($validated);
 
         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
-        
-    }
+}
+
 
     /**
      * Display the specified resource.
@@ -115,8 +121,12 @@ class SelfStudyPlanController extends Controller
         ]);
 
         $plan->update($validated);
+        $plan->load('goal');
 
-        return response()->json(['message' => 'Updated successfully', 'data' => $plan]);
+        return response()->json([
+            'success' => true,
+            'data' => $plan
+        ]);
     }
 
     /**
@@ -139,49 +149,54 @@ class SelfStudyPlanController extends Controller
 
         $plan->delete();
 
-        return response()->json(['message' => 'Deleted successfully']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Deleted successfully'
+        ]);
     }
 
 
-    public function storeBySubject(Request $request, $subjectId)
-        {
-            $student = Student::where('user_id', $request->user()->id)->first();
-            if (!$student) {
-                return response()->json(['error' => 'Student not found'], 404);
-            }
+    // public function storeBySubject(Request $request, $subjectId)
+    //     {
+    //         $student = Student::where('user_id', $request->user()->id)->first();
+    //         if (!$student) {
+    //             return response()->json(['error' => 'Student not found'], 404);
+    //         }
 
-            // Validate dữ liệu (bỏ validate subject_id vì subjectId lấy từ URL)
-            $validated = $request->validate([
-                'date' => 'required|date',
-                'module' => 'nullable|string|max:255',
-                'lesson' => 'required|string',
-                'time' => 'required|string',
-                'resources' => 'nullable|string',
-                'activities' => 'nullable|string',
-                'concentration' => 'required|string',
-                'plan_follow' => 'required|string',
-                'evaluation' => 'nullable|string',
-                'reinforcing' => 'nullable|string',
-                'notes' => 'nullable|string'
-            ]);
+    //         $validated = $request->validate([
+    //             'subject_id' =>'required|bigint|unsigned',
+    //             'date' => 'required|date',
+    //             'module' => 'nullable|string|max:255',
+    //             'lesson' => 'required|string',
+    //             'time' => 'required|string',
+    //             'resources' => 'nullable|string',
+    //             'activities' => 'nullable|string',
+    //             'concentration' => 'required|string',
+    //             'plan_follow' => 'required|string',
+    //             'evaluation' => 'nullable|string',
+    //             'reinforcing' => 'nullable|string',
+    //             'notes' => 'nullable|string'
+    //         ]);
 
-            $validated['student_id'] = $student->id;
-            $validated['subject_id'] = $subjectId;  // Gán subjectId từ URL
+    //         $validated['student_id'] = $student->id;
+    //         $validated['subject_id'] = $subjectId;  // Gán subjectId từ URL
 
-            $plan = SelfStudyPlan::create($validated);
+    //         $plan = SelfStudyPlan::create($validated);
 
-            return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
-        }
+    //         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
+    //     }
 
 
     // Lọc kế hoạch theo subject_id
-public function filterBySubject(Request $request, $subjectId)
-{
-    $plans = SelfStudyPlan::where('subject_id', $subjectId)
-        ->orderBy('date', 'desc')
-        ->get();
+    public function filterBySubject(Request $request, $subjectId)
+    {
+        $plans = SelfStudyPlan::where('subject_id', $subjectId)
+            ->orderBy('date', 'desc')
+            ->get();
 
-    return response()->json($plans);
-}
-
+            return response()->json([
+                'success' => true,
+                'data' => $plans
+            ]);
+        }
 }

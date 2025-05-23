@@ -76,35 +76,34 @@ class TeacherController extends Controller
         ]);
     }
 
-    public function getClasses($user_id)
-{
-    // Lấy danh sách class_id từ bảng class_subjects
-    $classIds = DB::table('class_subjects')
-                  ->where('teacher_id', $user_id)
-                  ->pluck('class_id')
-                  ->unique();
+        public function getClasses($teacherId)
+    {
+        // Lấy danh sách class_id từ bảng class_subjects
+        $classIds = DB::table('class_subjects')
+                    ->where('teacher_id', $teacherId)
+                    ->pluck('class_id')
+                    ->unique();
 
-    if ($classIds->isEmpty()) {
-        return response()->json(['data' => []]);
+        if ($classIds->isEmpty()) {
+            return response()->json(['data' => []]);
+        }
+
+        // Truy vấn danh sách lớp và đếm học sinh
+        $classes = Classes::whereIn('id', $classIds)
+                    ->withCount('students')
+                    ->get();
+
+        // Định dạng dữ liệu cho frontend
+        $formatted = $classes->map(function ($class) {
+            return [
+                'class_id' => $class->id,
+                'class_name' => $class->class_name,
+                'student_count' => $class->students_count
+            ];
+        });
+
+        return response()->json([
+            'data' => $formatted
+        ]);
     }
-
-    // Lấy danh sách lớp và đếm số học sinh trong từng lớp
-    $classes = Classes::whereIn('id', $classIds)
-                ->withCount('students')
-                ->get();
-
-    // Định dạng lại để frontend sử dụng được
-    $formatted = $classes->map(function ($class) {
-        return [
-            'class_id' => $class->id,
-            'class_name' => $class->class_name,
-            'student_count' => $class->students_count
-        ];
-    });
-
-    return response()->json([
-        'data' => $formatted
-    ]);
-}
-
 }
