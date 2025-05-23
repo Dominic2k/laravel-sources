@@ -24,50 +24,50 @@ Route::post('login', [AuthController::class, 'login']);
 Route::get('logout', [AuthController::class, "logout"])->middleware("logout");
 Route::post("register", [AuthController::class, "register"])->middleware("admin-account");
 
-Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+// Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
 
 // --- Public APIs ---
 Route::prefix('public')->group(function () {
-    Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
-    Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
-    Route::apiResource('students', StudentController::class)->only(['index', 'show']);
+    // Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
+    // Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
+    // Route::apiResource('students', StudentController::class)->only(['index', 'show']);
     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
-    Route::apiResource('users', UserController::class)->only(['index', 'show']);
-    Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
-    Route::apiResource('self-study-plans', SelfStudyPlanController::class);
-    Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
+    // Route::apiResource('users', UserController::class)->only(['index', 'show']);
+    // Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+    // Route::apiResource('self-study-plans', SelfStudyPlanController::class);
+    // Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
 
 
     // Danh sách lớp học của sinh viên theo user_id
-    Route::get('student/{user_id}/classes', function ($user_id) {
-        $student = \App\Models\Student::where('user_id', $user_id)->first();
-        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+    // Route::get('student/{user_id}/classes', function ($user_id) {
+    //     $student = \App\Models\Student::where('user_id', $user_id)->first();
+    //     if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-            ->join('classes', 'class_students.class_id', '=', 'classes.id')
-            ->select('classes.*')
-            ->get();
+    //     $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+    //         ->join('classes', 'class_students.class_id', '=', 'classes.id')
+    //         ->select('classes.*')
+    //         ->get();
 
-        return response()->json(['success' => true, 'data' => $classes]);
-    });
+    //     return response()->json(['success' => true, 'data' => $classes]);
+    // });
 });
 
 // --- In-class plans ---
-Route::apiResource('in-class-plans', InClassPlanController::class);
+// Route::apiResource('in-class-plans', InClassPlanController::class);
 
 // API mở rộng: lọc theo class_name
-Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
+// Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
 
 // --- Student Goals (Public) ---
-Route::prefix('student/{student_id}')
-    ->controller(GoalController::class)
-    ->group(function () {
-        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
-        Route::get('goal/{goal_id}', 'getGoalDetail');
-        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
-        Route::put('goal/{goal_id}', 'updateGoal');
-        Route::delete('goal/{goal_id}', 'deleteGoal');
-    });
+// Route::prefix('student/{student_id}')
+//     ->controller(GoalController::class)
+//     ->group(function () {
+//         Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+//         Route::get('goal/{goal_id}', 'getGoalDetail');
+//         Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+//         Route::put('goal/{goal_id}', 'updateGoal');
+//         Route::delete('goal/{goal_id}', 'deleteGoal');
+//     });
 
 // --- Student Subjects ---
 Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
@@ -214,81 +214,118 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/student/goals/{goalId}', [GoalController::class, 'deleteGoal']);
 
 
-    // --- Subject-based Plans ---
-    Route::prefix('student/subjects/{classSubjectId}')->group(function () {
-        // In Class Plans
-        Route::get('in-class-plans', [InClassPlanController::class, 'getPlansBySubject']);
+    Route::prefix('student/subject/{subjectId}')->group(function () {
+        Route::get('in-class-plans', [InClassPlanController::class, 'indexBySubject']);
         Route::post('in-class-plans', [InClassPlanController::class, 'store']);
         Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
         Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
         Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
 
+        Route::get('self-study-plans', [SelfStudyPlanController::class, 'getPlansBySubject']);
+        Route::post('self-study-plans', [SelfStudyPlanController::class, 'store']);
+        Route::get('self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
+        Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
+        Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
+    });
 
 // --- Achievements ---
-Route::apiResource('achievements', AchievementController::class);
+    Route::apiResource('achievements', AchievementController::class);
 
 // --- Student Subjects ---
-Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
+    Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
 
     // --- Profile ---
-    Route::get('/student/profile', function (Request $request) {
-        $user = Auth::guard('sanctum')->user();
-        $student = $user->student;
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user,
-                'student' => $student
-            ]
-        ]);
-    });
+    Route::get('/student/profile', [StudentController::class, 'getProfile']);
+    Route::put('/student/profile', [StudentController::class, 'updateProfile']);
+    // Route::get('/student/profile', function (Request $request) {
+    //     $user = Auth::guard('sanctum')->user();
+    //     $student = $user->student;
 
-    Route::put('/student/profile', function (Request $request) {
-        $user = Auth::guard('sanctum')->user();
-        $student = $user->student;
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => [
+    //             'user' => $user,
+    //             'student' => $student
+    //         ]
+    //     ]);
+    // });
 
-        $validated = $request->validate([
-            'full_name' => 'sometimes|string',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:6',
-            'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
-            'admission_date' => 'sometimes|date',
-            'current_semester' => 'sometimes|integer|min:1|max:6',
-        ]);
+    // Route::put('/student/profile', function (Request $request) {
+    //     $user = Auth::guard('sanctum')->user();
+    //     $student = $user->student;
 
-        if (isset($validated['full_name'])) {
-            $user->full_name = $validated['full_name'];
-        }
-        if (isset($validated['email'])) {
-            $user->email = $validated['email'];
-        }
-        if (isset($validated['password'])) {
-            $user->password = bcrypt($validated['password']);
-        }
+    //     $validated = $request->validate([
+    //         'full_name' => 'sometimes|string',
+    //         'email' => 'sometimes|email|unique:users,email,' . $user->id,
+    //         'password' => 'sometimes|string|min:6',
+    //         'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
+    //         'admission_date' => 'sometimes|date',
+    //         'current_semester' => 'sometimes|integer|min:1|max:6',
+    //     ]);
 
-        if (isset($validated['student_code'])) {
-            $student->student_code = $validated['student_code'];
-        }
-        if (isset($validated['admission_date'])) {
-            $student->admission_date = $validated['admission_date'];
-        }
-        if (isset($validated['current_semester'])) {
-            $student->current_semester = $validated['current_semester'];
-        }
+    //     if (isset($validated['full_name'])) {
+    //         $user->full_name = $validated['full_name'];
+    //     }
+    //     if (isset($validated['email'])) {
+    //         $user->email = $validated['email'];
+    //     }
+    //     if (isset($validated['password'])) {
+    //         $user->password = bcrypt($validated['password']);
+    //     }
 
-        $user->save();
-        $student->save();
+    //     if (isset($validated['student_code'])) {
+    //         $student->student_code = $validated['student_code'];
+    //     }
+    //     if (isset($validated['admission_date'])) {
+    //         $student->admission_date = $validated['admission_date'];
+    //     }
+    //     if (isset($validated['current_semester'])) {
+    //         $student->current_semester = $validated['current_semester'];
+    //     }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'user' => $user,
-                'student' => $student
-            ]
-        ]);
-    });
+    //     $user->save();
+    //     $student->save();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => [
+    //             'user' => $user,
+    //             'student' => $student
+    //         ]
+    //     ]);
+    // });
+    Route::apiResource('achievements', AchievementController::class);
 });
 
 
+    // --- Goal-based Plans ---
+    // Route::prefix('student/goals/{goalId}')->group(function () {
+    //     Route::get('in-class-plans', [InClassPlanController::class, 'filterByGoal']);
+    //     Route::get('self-study-plans', [SelfStudyPlanController::class, 'filterByGoal']);
+    // });
+
+    // --- Profile ---
+      
+// --- Admin Routes ---
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Quản lý sinh viên
+    Route::apiResource('students', App\Http\Controllers\Api\Admin\StudentManagementController::class);
+    
+    // Quản lý lớp học
+    Route::apiResource('classes', App\Http\Controllers\Api\Admin\ClassManagementController::class);
+    
+    // Quản lý sinh viên trong lớp
+    Route::get('classes/{class}/students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'getStudents']);
+    Route::post('classes/{class}/students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'addStudent']);
+    Route::delete('classes/{class}/students/{student}', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'removeStudent']);
+    
+    // Tạo nhiều sinh viên cho lớp
+    Route::post('classes/{class}/create-students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'createStudentsForClass']);
+});
+
+// ---Class of Teacher---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/teacher/{teacherId}/classes', [TeacherController::class, 'getClasses']);
+    Route::get('/classes/{classId}/students', [ClassController::class, 'getStudents']);
 });

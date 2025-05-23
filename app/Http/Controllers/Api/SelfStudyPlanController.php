@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\SelfStudyPlan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\SelfStudyPlan;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Student;
+use App\Models\Subject;
 
 class SelfStudyPlanController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
         $user = Auth::guard('sanctum')->user();
         $student = \App\Models\Student::where('user_id', $user->id)->first();
@@ -33,58 +35,53 @@ class SelfStudyPlanController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $user = Auth::guard('sanctum')->user();
-        $student = \App\Models\Student::where('user_id', $user->id)->first();
-        if (!$student) {
-            return response()->json(['error' => 'Student not found'], 404);
+    public function store(Request $request, $subjectId)
+{
+    // Kiểm tra subject có tồn tại không
+    if (!Subject::where('id', $subjectId)->exists()) {
+            return response()->json(['error' => 'Subject not found'], 404);
         }
 
         $validated = $request->validate([
-            'goal_id' => 'nullable|exists:goals,id',
             'date' => 'required|date',
-            'skills_module' => 'required|string|max:255',
-            'lesson_summary' => 'required|string',
-            'time_allocation' => 'required|integer|min:1',
-            'learning_resources' => 'nullable|string',
-            'learning_activities' => 'nullable|string',
-            'concentration_level' => 'required|integer|min:1|max:5',
-            'plan_follow_reflection' => 'required|string',
-            'work_evaluation' => 'nullable|string',
-            'reinforcing_techniques' => 'nullable|string',
+            'lesson' => 'required|string|max:255',
+            'time' => 'required|string',
+            'resources' => 'nullable|string',
+            'activities' => 'nullable|string',
+            'concentration' => 'required|string',
+            'plan_follow' => 'required|string',
+            'evaluation' => 'nullable|string',
+            'reinforcing' => 'nullable|string',
             'notes' => 'nullable|string'
         ]);
 
-        $validated['student_id'] = $student->id;
-        $plan = SelfStudyPlan::create($validated);
-        $plan->load('goal');
+        $validated['subject_id'] = $subjectId;
 
-        return response()->json([
-            'success' => true,
-            'data' => $plan
-        ], 201);
-    }
+        $plan = SelfStudyPlan::create($validated);
+
+        return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
+}
+
 
     /**
      * Display the specified resource.
      */
     public function show(Request $request, string $id)
     {
-        $user = Auth::guard('sanctum')->user();
-        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
         $plan = SelfStudyPlan::where('id', $id)
             ->where('student_id', $student->id)
-            ->with(['goal'])
-            ->firstOrFail();
-        return response()->json([
-            'success' => true,
-            'data' => $plan
-        ]);
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
+        return response()->json($plan);
     }
 
     /**
@@ -92,30 +89,32 @@ class SelfStudyPlanController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $user = Auth::guard('sanctum')->user();
-        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
+        $plan = SelfStudyPlan::where('id', $id)
+            ->where('student_id', $student->id)
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
         $validated = $request->validate([
-            'goal_id' => 'nullable|exists:goals,id',
             'date' => 'required|date',
-            'skills_module' => 'required|string|max:255',
-            'lesson_summary' => 'required|string',
-            'time_allocation' => 'required|integer|min:1',
-            'learning_resources' => 'nullable|string',
-            'learning_activities' => 'nullable|string',
-            'concentration_level' => 'required|integer|min:1|max:5',
-            'plan_follow_reflection' => 'required|string',
-            'work_evaluation' => 'nullable|string',
-            'reinforcing_techniques' => 'nullable|string',
+            'lesson' => 'required|string|max:255',
+            'time' => 'required|string',
+            'resources' => 'nullable|string',
+            'activities' => 'nullable|string',
+            'concentration' => 'required|string',
+            'plan_follow' => 'required|string',
+            'evaluation' => 'nullable|string',
+            'reinforcing' => 'nullable|string',
             'notes' => 'nullable|string'
         ]);
 
-        $plan = SelfStudyPlan::where('id', $id)
-            ->where('student_id', $student->id)
-            ->firstOrFail();
         $plan->update($validated);
         $plan->load('goal');
 
@@ -130,15 +129,19 @@ class SelfStudyPlanController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
-        $user = Auth::guard('sanctum')->user();
-        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        $student = Student::where('user_id', $request->user()->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
         $plan = SelfStudyPlan::where('id', $id)
             ->where('student_id', $student->id)
-            ->firstOrFail();
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+        }
+
         $plan->delete();
 
         return response()->json([
@@ -150,44 +153,25 @@ class SelfStudyPlanController extends Controller
     /**
      * Get plans by subject
      */
-    public function getPlansBySubject(Request $request, $classSubjectId)
+    public function getPlansBySubject($subjectId)
     {
         $user = Auth::guard('sanctum')->user();
-        $student = \App\Models\Student::where('user_id', $user->id)->first();
+
+        // Nếu cần xác nhận là student vẫn giữ đoạn sau
+        $student = Student::where('user_id', $user->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        // Kiểm tra xem student có thuộc class_subject này không
-        $classSubject = \App\Models\ClassSubject::where('id', $classSubjectId)
-            ->whereHas('class.students', function($query) use ($student) {
-                $query->where('student_id', $student->user_id);
-            })
-            ->first();
-
-        if (!$classSubject) {
-            return response()->json(['error' => 'Subject not found or you are not enrolled in this subject'], 404);
-        }
-
-        // Lấy tất cả kế hoạch của student cho môn học này
-        $plans = SelfStudyPlan::where('student_id', $student->id)
-            ->where(function($query) use ($classSubjectId) {
-                // Lấy kế hoạch có goal liên quan đến môn học
-                $query->whereHas('goal', function($q) use ($classSubjectId) {
-                    $q->where('class_subject_id', $classSubjectId);
-                })
-                // Hoặc kế hoạch không có goal (goal_id là null)
-                ->orWhereNull('goal_id');
-            })
-            ->with(['goal'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Vì bảng không có student_id nên không thể lọc theo đó
+        $plans = SelfStudyPlan::where('subject_id', $subjectId)->get();
 
         return response()->json([
             'success' => true,
             'data' => $plans
         ]);
     }
+
 
     /**
      * Filter plans by goal
@@ -215,9 +199,11 @@ class SelfStudyPlanController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $plans
-        ]);
-    }
+            return response()->json([
+                'success' => true,
+                'data' => $plans
+            ]);
+        }
 }
+
+
