@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\SelfStudyPlan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\SelfStudyPlan;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
 use App\Models\Subject;
@@ -14,9 +14,10 @@ class SelfStudyPlanController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $student = Student::where('user_id', $request->user()->id)->first();
+        $user = Auth::guard('sanctum')->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
@@ -29,8 +30,6 @@ class SelfStudyPlanController extends Controller
             'success' => true,
             'data' => $plans
         ]);
-
-        return response()->json($plans);
     }
 
     /**
@@ -44,14 +43,12 @@ class SelfStudyPlanController extends Controller
         }
 
         $validated = $request->validate([
-            'subject_id' => 'required|integer',
             'date' => 'required|date',
-            'module' => 'required|string|max:255',
-            'lesson' => 'required|string',
-            'time' => 'required|integer',
+            'lesson' => 'required|string|max:255',
+            'time' => 'required|string',
             'resources' => 'nullable|string',
             'activities' => 'nullable|string',
-            'concentration' => 'required|integer',
+            'concentration' => 'required|string',
             'plan_follow' => 'required|string',
             'evaluation' => 'nullable|string',
             'reinforcing' => 'nullable|string',
@@ -106,11 +103,9 @@ class SelfStudyPlanController extends Controller
         }
 
         $validated = $request->validate([
-            'subject_id' => 'nullable|exists:subjects,id',
             'date' => 'required|date',
-            'module' => 'required|string|max:255',
-            'lesson' => 'required|string',
-            'time' => 'required|integer',
+            'lesson' => 'required|string|max:255',
+            'time' => 'required|string',
             'resources' => 'nullable|string',
             'activities' => 'nullable|string',
             'concentration' => 'required|string',
@@ -155,43 +150,53 @@ class SelfStudyPlanController extends Controller
         ]);
     }
 
-
-    // public function storeBySubject(Request $request, $subjectId)
-    //     {
-    //         $student = Student::where('user_id', $request->user()->id)->first();
-    //         if (!$student) {
-    //             return response()->json(['error' => 'Student not found'], 404);
-    //         }
-
-    //         $validated = $request->validate([
-    //             'subject_id' =>'required|bigint|unsigned',
-    //             'date' => 'required|date',
-    //             'module' => 'nullable|string|max:255',
-    //             'lesson' => 'required|string',
-    //             'time' => 'required|string',
-    //             'resources' => 'nullable|string',
-    //             'activities' => 'nullable|string',
-    //             'concentration' => 'required|string',
-    //             'plan_follow' => 'required|string',
-    //             'evaluation' => 'nullable|string',
-    //             'reinforcing' => 'nullable|string',
-    //             'notes' => 'nullable|string'
-    //         ]);
-
-    //         $validated['student_id'] = $student->id;
-    //         $validated['subject_id'] = $subjectId;  // Gán subjectId từ URL
-
-    //         $plan = SelfStudyPlan::create($validated);
-
-    //         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
-    //     }
-
-
-    // Lọc kế hoạch theo subject_id
-    public function filterBySubject(Request $request, $subjectId)
+    /**
+     * Get plans by subject
+     */
+    public function getPlansBySubject($subjectId)
     {
-        $plans = SelfStudyPlan::where('subject_id', $subjectId)
-            ->orderBy('date', 'desc')
+        $user = Auth::guard('sanctum')->user();
+
+        // Nếu cần xác nhận là student vẫn giữ đoạn sau
+        $student = Student::where('user_id', $user->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        // Vì bảng không có student_id nên không thể lọc theo đó
+        $plans = SelfStudyPlan::where('subject_id', $subjectId)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $plans
+        ]);
+    }
+
+
+    /**
+     * Filter plans by goal
+     */
+    public function filterByGoal(Request $request, $goalId)
+    {
+        $user = Auth::guard('sanctum')->user();
+        $student = \App\Models\Student::where('user_id', $user->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        // Kiểm tra xem goal có thuộc về student này không
+        $goal = \App\Models\Goal::where('id', $goalId)
+            ->where('student_id', $student->user_id)
+            ->first();
+
+        if (!$goal) {
+            return response()->json(['error' => 'Goal not found'], 404);
+        }
+
+        $plans = SelfStudyPlan::where('goal_id', $goalId)
+            ->where('student_id', $student->id)
+            ->with(['goal'])
+            ->orderBy('created_at', 'desc')
             ->get();
 
             return response()->json([
@@ -200,3 +205,5 @@ class SelfStudyPlanController extends Controller
             ]);
         }
 }
+
+
