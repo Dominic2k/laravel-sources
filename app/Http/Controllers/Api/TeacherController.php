@@ -1,12 +1,13 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use Illuminate\Support\Facades\DB;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Teacher;
 use App\Models\User;
-  use Illuminate\Support\Facades\DB;
+use App\Models\Classes;
 
 class TeacherController extends Controller
 {
@@ -75,17 +76,34 @@ class TeacherController extends Controller
         ]);
     }
 
+        public function getClasses($teacherId)
+    {
+        // Lấy danh sách class_id từ bảng class_subjects
+        $classIds = DB::table('class_subjects')
+                    ->where('teacher_id', $teacherId)
+                    ->pluck('class_id')
+                    ->unique();
 
-public function getTeachers()
-{
-    $teachers = DB::table('teachers')
-        ->join('users', 'teachers.user_id', '=', 'users.id')
-        ->where('users.role', 'teacher')
-        ->select('teachers.user_id as id', 'users.full_name')
-        ->orderBy('users.full_name')
-        ->get();
+        if ($classIds->isEmpty()) {
+            return response()->json(['data' => []]);
+        }
 
-    return response()->json($teachers);
-}
+        // Truy vấn danh sách lớp và đếm học sinh
+        $classes = Classes::whereIn('id', $classIds)
+                    ->withCount('students')
+                    ->get();
 
+        // Định dạng dữ liệu cho frontend
+        $formatted = $classes->map(function ($class) {
+            return [
+                'class_id' => $class->id,
+                'class_name' => $class->class_name,
+                'student_count' => $class->students_count
+            ];
+        });
+
+        return response()->json([
+            'data' => $formatted
+        ]);
+    }
 }
