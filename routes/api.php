@@ -15,7 +15,8 @@ use App\Http\Controllers\Api\{
     SelfStudyPlanController,
     AchievementController,
     AuthController,
-    TeacherTagController
+    TeacherTagController,
+    NotificationController
 };
 use Illuminate\Support\Facades\Auth;
 
@@ -27,30 +28,30 @@ Route::post("register", [AuthController::class, "register"])->middleware("admin-
 // Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
 
 // --- Public APIs ---
-// Route::prefix('public')->group(function () {
-//     Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
-//     Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
-//     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
-//     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
-//     Route::apiResource('users', UserController::class)->only(['index', 'show']);
-//     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
-//     Route::apiResource('self-study-plans', SelfStudyPlanController::class);
-//     Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
+Route::prefix('public')->group(function () {
+    // Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
+    // Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
+    // Route::apiResource('students', StudentController::class)->only(['index', 'show']);
+    Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
+    // Route::apiResource('users', UserController::class)->only(['index', 'show']);
+    // Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+    // Route::apiResource('self-study-plans', SelfStudyPlanController::class);
+    // Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
 
 
-//     // Danh sách lớp học của sinh viên theo user_id
-//     Route::get('student/{user_id}/classes', function ($user_id) {
-//         $student = \App\Models\Student::where('user_id', $user_id)->first();
-//         if (!$student) return response()->json(['error' => 'Student not found'], 404);
+    // Danh sách lớp học của sinh viên theo user_id
+    // Route::get('student/{user_id}/classes', function ($user_id) {
+    //     $student = \App\Models\Student::where('user_id', $user_id)->first();
+    //     if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-//         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-//             ->join('classes', 'class_students.class_id', '=', 'classes.id')
-//             ->select('classes.*')
-//             ->get();
+    //     $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+    //         ->join('classes', 'class_students.class_id', '=', 'classes.id')
+    //         ->select('classes.*')
+    //         ->get();
 
-//         return response()->json(['success' => true, 'data' => $classes]);
-//     });
-// });
+    //     return response()->json(['success' => true, 'data' => $classes]);
+    // });
+});
 
 // --- In-class plans ---
 // Route::apiResource('in-class-plans', InClassPlanController::class);
@@ -307,3 +308,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Profile ---
       
+Route::apiResource('notifications', NotificationController::class);
+
+
+
+
+
