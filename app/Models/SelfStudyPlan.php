@@ -10,7 +10,6 @@ class SelfStudyPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'goal_id',
         'date',
         'lesson',
         'time',

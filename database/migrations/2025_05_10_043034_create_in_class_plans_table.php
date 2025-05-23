@@ -10,9 +10,7 @@ class CreateInClassPlansTable extends Migration
     {
         Schema::create('in_class_plans', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('goal_id')->nullable();
-            $table->unsignedBigInteger('student_id');
-            $table->unsignedBigInteger('class_subject_id');
+            $table->unsignedBigInteger('subject_id');
             $table->date('date')->nullable();
             $table->string('skills_module', 255)->nullable();
             $table->text('lesson_summary')->nullable();
@@ -22,10 +20,7 @@ class CreateInClassPlansTable extends Migration
             $table->boolean('problem_solved')->default(true);
             $table->text('additional_notes')->nullable();
             $table->timestamps();
-            
-            $table->foreign('goal_id')->references('id')->on('goals')->onDelete('set null');
-            $table->foreign('student_id')->references('user_id')->on('students')->onDelete('cascade');
-            $table->foreign('class_subject_id')->references('id')->on('class_subjects')->onDelete('cascade');
+            $table->foreign('subject_id')->references('id')->on('subjects')->onDelete('cascade');
         });
     }
 

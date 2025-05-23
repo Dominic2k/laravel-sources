@@ -159,11 +159,16 @@ class StudentController extends Controller
     public function getProfile(Request $request)
     {
         try {
-            $user = Auth::guard('sanctum')->user();
-            if (!$user) {
+            $authUser = Auth::guard('sanctum')->user();
+            if (!$authUser) {
                 return response()->json(['error' => 'Unauthorized'], 401);
             }
-
+    
+            $user = \App\Models\User::find($authUser->id);
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+    
             $student = $user->student;
             if (!$student) {
                 return response()->json(['error' => 'Student profile not found'], 404);
@@ -185,62 +190,63 @@ class StudentController extends Controller
     }
 
     public function updateProfile(Request $request)
-    {
-        try {
-            $user = Auth::guard('sanctum')->user();
-            if (!$user) {
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-
-            $student = $user->student;
-            if (!$student) {
-                return response()->json(['error' => 'Student profile not found'], 404);
-            }
-
-            $validated = $request->validate([
-                'full_name' => 'sometimes|string',
-                'email' => 'sometimes|email|unique:users,email,' . $user->id,
-                'password' => 'sometimes|string|min:6',
-                'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
-                'admission_date' => 'sometimes|date',
-                'current_semester' => 'sometimes|integer|min:1|max:6',
-            ]);
-
-            if (isset($validated['full_name'])) {
-                $user->full_name = $validated['full_name'];
-            }
-            if (isset($validated['email'])) {
-                $user->email = $validated['email'];
-            }
-            if (isset($validated['password'])) {
-                $user->password = bcrypt($validated['password']);
-            }
-
-            if (isset($validated['student_code'])) {
-                $student->student_code = $validated['student_code'];
-            }
-            if (isset($validated['admission_date'])) {
-                $student->admission_date = $validated['admission_date'];
-            }
-            if (isset($validated['current_semester'])) {
-                $student->current_semester = $validated['current_semester'];
-            }
-
-            $user->save();
-            $student->save();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'user' => $user,
-                    'student' => $student
-                ]
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Internal Server Error',
-                'message' => $e->getMessage()
-            ], 500);
+{
+    try {
+        $user = Auth::guard('sanctum')->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
+
+        $student = $user->student;
+        if (!$student) {
+            return response()->json(['error' => 'Student profile not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'full_name' => 'sometimes|string',
+            'email' => 'sometimes|email|unique:users,email,' . $user->id,
+            'password' => 'sometimes|string|min:6',
+            'student_code' => 'sometimes|string|unique:students,student_code,' . $user->id . ',user_id',
+            'admission_date' => 'sometimes|date',
+            'current_semester' => 'sometimes|integer|min:1|max:6',
+        ]);
+
+        if (isset($validated['full_name'])) {
+            $user->full_name = $validated['full_name'];
+        }
+        if (isset($validated['email'])) {
+            $user->email = $validated['email'];
+        }
+        if (isset($validated['password'])) {
+            $user->password = bcrypt($validated['password']);
+        }
+
+        if (isset($validated['student_code'])) {
+            $student->student_code = $validated['student_code'];
+        }
+        if (isset($validated['admission_date'])) {
+            $student->admission_date = $validated['admission_date'];
+        }
+        if (isset($validated['current_semester'])) {
+            $student->current_semester = $validated['current_semester'];
+        }
+
+        $user->save();
+        $student->save();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user,
+                'student' => $student
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Internal Server Error',
+            'message' => $e->getMessage()
+        ], 500);
     }
+} 
+
 }
