@@ -24,50 +24,50 @@ Route::post('login', [AuthController::class, 'login']);
 Route::get('logout', [AuthController::class, "logout"])->middleware("logout");
 Route::post("register", [AuthController::class, "register"])->middleware("admin-account");
 
-Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
+// Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
 
 // --- Public APIs ---
-Route::prefix('public')->group(function () {
-    Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
-    Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
-    Route::apiResource('students', StudentController::class)->only(['index', 'show']);
-    Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
-    Route::apiResource('users', UserController::class)->only(['index', 'show']);
-    Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
-    Route::apiResource('self-study-plans', SelfStudyPlanController::class);
-    Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
+// Route::prefix('public')->group(function () {
+//     Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
+//     Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
+//     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
+//     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
+//     Route::apiResource('users', UserController::class)->only(['index', 'show']);
+//     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+//     Route::apiResource('self-study-plans', SelfStudyPlanController::class);
+//     Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
 
 
-    // Danh sách lớp học của sinh viên theo user_id
-    Route::get('student/{user_id}/classes', function ($user_id) {
-        $student = \App\Models\Student::where('user_id', $user_id)->first();
-        if (!$student) return response()->json(['error' => 'Student not found'], 404);
+//     // Danh sách lớp học của sinh viên theo user_id
+//     Route::get('student/{user_id}/classes', function ($user_id) {
+//         $student = \App\Models\Student::where('user_id', $user_id)->first();
+//         if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-        $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-            ->join('classes', 'class_students.class_id', '=', 'classes.id')
-            ->select('classes.*')
-            ->get();
+//         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+//             ->join('classes', 'class_students.class_id', '=', 'classes.id')
+//             ->select('classes.*')
+//             ->get();
 
-        return response()->json(['success' => true, 'data' => $classes]);
-    });
-});
+//         return response()->json(['success' => true, 'data' => $classes]);
+//     });
+// });
 
 // --- In-class plans ---
-Route::apiResource('in-class-plans', InClassPlanController::class);
+// Route::apiResource('in-class-plans', InClassPlanController::class);
 
 // API mở rộng: lọc theo class_name
-Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
+// Route::get('self-study-plans/goal/{goalId}', [SelfStudyPlanController::class, 'filterByClass']);
 
 // --- Student Goals (Public) ---
-Route::prefix('student/{student_id}')
-    ->controller(GoalController::class)
-    ->group(function () {
-        Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
-        Route::get('goal/{goal_id}', 'getGoalDetail');
-        Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
-        Route::put('goal/{goal_id}', 'updateGoal');
-        Route::delete('goal/{goal_id}', 'deleteGoal');
-    });
+// Route::prefix('student/{student_id}')
+//     ->controller(GoalController::class)
+//     ->group(function () {
+//         Route::get('subject/{class_subject_id}/goals', 'getGoalsBySubject');
+//         Route::get('goal/{goal_id}', 'getGoalDetail');
+//         Route::post('subject/{class_subject_id}/goals', 'createGoalForSubject');
+//         Route::put('goal/{goal_id}', 'updateGoal');
+//         Route::delete('goal/{goal_id}', 'deleteGoal');
+//     });
 
 // --- Student Subjects ---
 Route::get('/student/{user_id}/subjects', [StudentController::class, 'getSubjects']);
@@ -215,20 +215,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     Route::prefix('student/subject/{subjectId}')->group(function () {
-            Route::get('in-class-plans', [InClassPlanController::class, 'indexBySubject']);
-            Route::post('in-class-plans', [InClassPlanController::class, 'store']);
-            Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
-            Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
-            Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
+        Route::get('in-class-plans', [InClassPlanController::class, 'indexBySubject']);
+        Route::post('in-class-plans', [InClassPlanController::class, 'store']);
+        Route::get('in-class-plans/{id}', [InClassPlanController::class, 'show']);
+        Route::put('in-class-plans/{id}', [InClassPlanController::class, 'update']);
+        Route::delete('in-class-plans/{id}', [InClassPlanController::class, 'destroy']);
 
-            Route::get('self-study-plans', [SelfStudyPlanController::class, 'getPlansBySubject']);
-            Route::post('self-study-plans', [SelfStudyPlanController::class, 'store']);
-            Route::get('self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
-            Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
-            Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
-        
+        Route::get('self-study-plans', [SelfStudyPlanController::class, 'getPlansBySubject']);
+        Route::post('self-study-plans', [SelfStudyPlanController::class, 'store']);
+        Route::get('self-study-plans/{id}', [SelfStudyPlanController::class, 'show']);
+        Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
+        Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
     });
-
+    
 // --- Achievements ---
     Route::apiResource('achievements', AchievementController::class);
 
@@ -238,7 +237,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Profile ---
 
     Route::get('/student/profile', [StudentController::class, 'getProfile']);
-    Route::put('/student/profile', [StudentController::class, 'updateProfile']);  
+    Route::put('/student/profile', [StudentController::class, 'updateProfile']);
     // Route::get('/student/profile', function (Request $request) {
     //     $user = Auth::guard('sanctum')->user();
     //     $student = $user->student;
@@ -296,9 +295,9 @@ Route::middleware('auth:sanctum')->group(function () {
     //         ]
     //     ]);
     // });
+    Route::apiResource('achievements', AchievementController::class);
 });
 
-Route::apiResource('achievements', AchievementController::class);
 
     // --- Goal-based Plans ---
     // Route::prefix('student/goals/{goalId}')->group(function () {
