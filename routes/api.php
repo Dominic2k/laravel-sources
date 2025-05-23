@@ -27,30 +27,30 @@ Route::post("register", [AuthController::class, "register"])->middleware("admin-
 // Route::get("/student", [UserController::class, 'show'])->middleware("student-account");
 
 // --- Public APIs ---
-// Route::prefix('public')->group(function () {
-//     Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
-//     Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
-//     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
-//     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
-//     Route::apiResource('users', UserController::class)->only(['index', 'show']);
-//     Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
-//     Route::apiResource('self-study-plans', SelfStudyPlanController::class);
-//     Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
+Route::prefix('public')->group(function () {
+    // Route::apiResource('classes', ClassController::class)->only(['index', 'show']);
+    // Route::apiResource('subjects', SubjectController::class)->only(['index', 'show']);
+    // Route::apiResource('students', StudentController::class)->only(['index', 'show']);
+    Route::apiResource('teachers', TeacherController::class)->only(['index', 'show']);
+    // Route::apiResource('users', UserController::class)->only(['index', 'show']);
+    // Route::apiResource('class-subjects', ClassSubjectController::class)->only(['index', 'show']);
+    // Route::apiResource('self-study-plans', SelfStudyPlanController::class);
+    // Route::get('/public/teachers', [TeacherTagController::class, 'getTeachers']);
 
 
-//     // Danh sách lớp học của sinh viên theo user_id
-//     Route::get('student/{user_id}/classes', function ($user_id) {
-//         $student = \App\Models\Student::where('user_id', $user_id)->first();
-//         if (!$student) return response()->json(['error' => 'Student not found'], 404);
+    // Danh sách lớp học của sinh viên theo user_id
+    // Route::get('student/{user_id}/classes', function ($user_id) {
+    //     $student = \App\Models\Student::where('user_id', $user_id)->first();
+    //     if (!$student) return response()->json(['error' => 'Student not found'], 404);
 
-//         $classes = \App\Models\ClassStudent::where('student_id', $student->id)
-//             ->join('classes', 'class_students.class_id', '=', 'classes.id')
-//             ->select('classes.*')
-//             ->get();
+    //     $classes = \App\Models\ClassStudent::where('student_id', $student->id)
+    //         ->join('classes', 'class_students.class_id', '=', 'classes.id')
+    //         ->select('classes.*')
+    //         ->get();
 
-//         return response()->json(['success' => true, 'data' => $classes]);
-//     });
-// });
+    //     return response()->json(['success' => true, 'data' => $classes]);
+    // });
+});
 
 // --- In-class plans ---
 // Route::apiResource('in-class-plans', InClassPlanController::class);
@@ -227,7 +227,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('self-study-plans/{id}', [SelfStudyPlanController::class, 'update']);
         Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
     });
-    
+
 // --- Achievements ---
     Route::apiResource('achievements', AchievementController::class);
 
@@ -307,3 +307,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Profile ---
       
+// --- Admin Routes ---
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Quản lý sinh viên
+    Route::apiResource('students', App\Http\Controllers\Api\Admin\StudentManagementController::class);
+    
+    // Quản lý lớp học
+    Route::apiResource('classes', App\Http\Controllers\Api\Admin\ClassManagementController::class);
+    
+    // Quản lý sinh viên trong lớp
+    Route::get('classes/{class}/students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'getStudents']);
+    Route::post('classes/{class}/students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'addStudent']);
+    Route::delete('classes/{class}/students/{student}', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'removeStudent']);
+    
+    // Tạo nhiều sinh viên cho lớp
+    Route::post('classes/{class}/create-students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'createStudentsForClass']);
+});
+
+
+
