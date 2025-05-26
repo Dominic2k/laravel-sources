@@ -231,7 +231,11 @@ class StudentController extends Controller
             $student->current_semester = $validated['current_semester'];
         }
 
-        $user->save();
+        User::where('id', $user->id)->update([
+            'full_name' => $user->full_name,
+            'email' => $user->email,
+            'password' => $user->password
+        ]);
         $student->save();
 
         return response()->json([
@@ -250,3 +254,4 @@ class StudentController extends Controller
 } 
 
 }
+
