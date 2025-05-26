@@ -28,6 +28,7 @@ class AuthController extends Controller
         if ($user->role === 'student') {
             $student = $user->student;
         }
+        
 
         return response()->json([
             'access_token' => $token,
