@@ -328,7 +328,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Profile ---
       
-Route::apiResource('notifications', NotificationController::class);
+// Route::apiResource('notifications', NotificationController::class);
 
 
 
