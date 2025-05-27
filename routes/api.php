@@ -330,7 +330,11 @@ Route::middleware('auth:sanctum')->group(function () {
       
 // Route::apiResource('notifications', NotificationController::class);
 
-
+// ---Class of Teacher---
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/teacher/{teacherId}/classes', [TeacherController::class, 'getClasses']);
+    Route::get('/classes/{classId}/students', [ClassController::class, 'getStudents']);
+});
 
 
 
