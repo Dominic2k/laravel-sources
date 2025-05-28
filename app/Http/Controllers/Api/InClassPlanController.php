@@ -92,6 +92,7 @@ class InClassPlanController extends Controller
         return response()->json(['error' => 'Student not found'], 404);
     }
 
+
     $validated = $request->validate([
         'date' => 'required|date',
         'skills_module' => 'required|string|max:255',
@@ -109,6 +110,10 @@ class InClassPlanController extends Controller
 
     $plan->update($validated);
 
+    if (!$plan) {
+            return response()->json(['error' => 'Plan not found'], 404);
+    }
+
     return response()->json([
         'success' => true,
         'data' => $plan
@@ -117,7 +122,7 @@ class InClassPlanController extends Controller
 
 
     // Xoá kế hoạch
-    public function destroy(Request $request, $subjectId, $id)
+    public function destroy($subjectId, $id)
 {
     $user = Auth::guard('sanctum')->user();
 
