@@ -31,7 +31,7 @@ class InClassPlanController extends Controller
 }
 
 
-    // Thêm kế hoạch mới cho subject
+    // Thêm in class kế hoạch mới cho subject
     public function store(Request $request, $subjectId)
     {
         $user = Auth::guard('sanctum')->user();
