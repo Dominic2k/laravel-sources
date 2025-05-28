@@ -10,7 +10,6 @@ class InClassPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'student_id',
         'subject_id',
         'date',
         'skills_module',
