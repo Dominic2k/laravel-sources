@@ -31,6 +31,12 @@ class Goal extends Model
     {
         return $this->belongsTo(ClassSubject::class, 'class_subject_id');
     }
+
+    public function deadlines()
+    {
+        return $this->morphMany(\App\Models\Deadline::class, 'target');
+    }
+
 }
 
 

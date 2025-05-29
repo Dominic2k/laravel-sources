@@ -71,7 +71,7 @@ class UserController extends Controller
             $validated['password'] = Hash::make($validated['password']);
         }
         
-        $user->update($validated);
+        User::where('id', $user->id)->update($validated);
         
         return response()->json([
             'success' => true,

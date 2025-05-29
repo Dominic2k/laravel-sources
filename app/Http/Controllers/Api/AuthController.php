@@ -17,7 +17,7 @@ class AuthController extends Controller
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json(['message' => 'Sai thông tin đăng nhập'], 401);
         }
-
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         
         // Tạo token với thời hạn 24 giờ
@@ -52,6 +52,7 @@ class AuthController extends Controller
     
     public function logout()
     {
+        /** @var \App\Models\User $user */
         Auth::guard('sanctum')->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logged out successfully']);
     }

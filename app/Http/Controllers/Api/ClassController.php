@@ -81,13 +81,16 @@ class ClassController extends Controller
             return response()->json(['error' => 'Class not found'], 404);
         }
 
-        $students = $class->students->map(function ($student) {
+        // Lọc các sinh viên có role là 'student'
+        $students = $class->students->filter(function ($student) {
+            return optional($student->user)->role === 'student';
+        })->map(function ($student) {
             return [
-                'student_id' => $student->id,
-                'full_name' => optional($student->user)->full_name ?? 'No name',
-                'email' => optional($student->user)->email ?? 'No email',
+                'student_id' => $student->user->id,
+                'full_name' => $student->user->full_name ?? 'No name',
+                'email' => $student->user->email ?? 'No email',
             ];
-        });
+        })->values(); // Reset chỉ số mảng
 
         return response()->json([
             'success' => true,
@@ -97,7 +100,5 @@ class ClassController extends Controller
             ]
         ]);
     }
-
-
 
 }

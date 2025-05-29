@@ -38,4 +38,9 @@ class InClassPlan extends Model
         return $this->belongsTo(InClassPlan::class);
     }
 
+    public function deadlines()
+    {
+        return $this->morphMany(\App\Models\Deadline::class, 'target');
+    }
+
 }
