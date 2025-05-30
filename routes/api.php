@@ -16,7 +16,8 @@ use App\Http\Controllers\Api\{
     AchievementController,
     AuthController,
     TeacherTagController,
-    StudentSubjectController
+    StudentSubjectController,
+    DeadlineController
 };
 use Illuminate\Support\Facades\Auth;
 
@@ -106,3 +107,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/teacher/{teacherId}/classes', [TeacherController::class, 'getClasses']);
     Route::get('/classes/{classId}/students', [ClassController::class, 'getStudents']);
 });
+
+
+// --Teacher set deadline--
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/deadlines', [DeadlineController::class, 'index']);
+    Route::post('/classes/{classId}/deadlines', [DeadlineController::class, 'store']);
+    Route::get('/deadlines/{id}', [DeadlineController::class, 'show']);
+    Route::put('/deadlines/{id}', [DeadlineController::class, 'update']);
+    Route::delete('/deadlines/{id}', [DeadlineController::class, 'destroy']);
+});
+
+// --Get name of teacher in sidebar UI teacher--
+Route::middleware(['auth:sanctum'])->get('/teacher/{id}', [TeacherController::class, 'show']);
