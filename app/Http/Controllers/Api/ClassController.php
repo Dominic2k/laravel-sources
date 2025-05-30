@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Classes;
 
 class ClassController extends Controller
@@ -81,6 +82,11 @@ class ClassController extends Controller
             return response()->json(['error' => 'Class not found'], 404);
         }
 
+        // Lấy teacher_id từ bảng class_subjects (có thể nhiều giáo viên, ở đây lấy giáo viên đầu tiên)
+        $teacherId = DB::table('class_subjects')
+            ->where('class_id', $classId)
+            ->value('teacher_id');
+
         // Lọc các sinh viên có role là 'student'
         $students = $class->students->filter(function ($student) {
             return optional($student->user)->role === 'student';
@@ -97,6 +103,7 @@ class ClassController extends Controller
             'data' => [
                 'class_name' => $class->class_name,
                 'students' => $students,
+                'teacher_id' => $teacherId,
             ]
         ]);
     }
