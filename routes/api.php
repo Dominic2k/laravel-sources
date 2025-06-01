@@ -16,8 +16,10 @@ use App\Http\Controllers\Api\{
     AchievementController,
     AuthController,
     TeacherTagController,
-    NotificationController
+    NotificationController,
+    FeedbackController
 };
+use App\Models\InClassPlan;
 use Illuminate\Support\Facades\Auth;
 
 // --- Auth ---
@@ -334,7 +336,18 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/teacher/{teacherId}/classes', [TeacherController::class, 'getClasses']);
     Route::get('/classes/{classId}/students', [ClassController::class, 'getStudents']);
+    Route::get('/teachers/student-profile/{studentId}', [TeacherController::class, 'viewStudentProfile']);
+    Route::get('/teachers/students/{studentId}/plans', [TeacherController::class, 'getStudentPlans']);
+
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/feedback', [FeedbackController::class, 'index']);
+    Route::post('/feedback', [FeedbackController::class, 'store']);
+    Route::get('/teachers/students/{student}/feedbacks', [FeedbackController::class, 'getStudentFeedbacks']);
+});
+
+
 
 
 

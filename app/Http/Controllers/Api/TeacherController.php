@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Models\Classes;
+use App\Models\InClassPlan;
+use App\Models\SelfStudyPlan;
+
+use Illuminate\Support\Facades\Auth;
+
 
 class TeacherController extends Controller
 {
@@ -106,4 +111,50 @@ class TeacherController extends Controller
             'data' => $formatted
         ]);
     }
+
+  public function viewStudentProfile($studentId)
+{
+    $student = User::with([
+        'goals' => function ($query) {
+            $query->whereHas('ClassSubject', function ($q) {
+                $q->where('teacher_id', Auth::guard("sanctum")->user()->id);
+            });
+        },
+        'goals.ClassSubject'
+    ])->find($studentId);
+
+    if (!$student) {
+        return response()->json(['message' => 'Student not found'], 404);
+    }
+
+    if ($student->role !== 'student') {
+        return response()->json(['message' => 'This user is not a student'], 403);
+    }
+
+    return response()->json([
+        'student' => [
+            'id' => $student->id,
+            'name' => $student->full_name,
+            'email' => $student->email,
+            'class' => $student->goals
+        ],
+        'goals' => $student->goals
+    ]);
+}
+
+public function getStudentPlans($studentId)
+{
+    $inClassPlans = InClassPlan::where('student_id', $studentId)
+        ->orderBy('date', 'desc')
+        ->get();
+
+    $selfStudyPlans = SelfStudyPlan::where('student_id', $studentId)
+        ->orderBy('date', 'desc')
+        ->get();
+
+    return response()->json([
+        'in_class_plans' => $inClassPlans,
+        'self_study_plans' => $selfStudyPlans
+    ]);
+}
 }

@@ -33,7 +33,25 @@ class User extends Authenticatable
     {
         return $this->hasOne(Teacher::class);
     }
+
+    public function goals()
+{
+    return $this->hasMany(Goal::class, 'student_id');
 }
+
+public function inClassPlans()
+{
+    return $this->hasMany(InClassPlan::class, 'student_id');
+}
+
+public function selfStudyPlans()
+{
+    return $this->hasMany(SelfStudyPlan::class, 'student_id');
+}
+
+}
+
+
 
 
 

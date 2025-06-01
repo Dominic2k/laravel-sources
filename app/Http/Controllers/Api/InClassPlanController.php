@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\InClassPlan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\ClassSubject;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
 
@@ -29,6 +30,7 @@ class InClassPlanController extends Controller
         'data' => $plans
     ]);
 }
+
 
 
     // Thêm kế hoạch mới cho subject

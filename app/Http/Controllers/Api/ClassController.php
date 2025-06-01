@@ -83,7 +83,7 @@ class ClassController extends Controller
 
         $students = $class->students->map(function ($student) {
             return [
-                'student_id' => $student->id,
+                'student_id' => $student->user_id,
                 'full_name' => optional($student->user)->full_name ?? 'No name',
                 'email' => optional($student->user)->email ?? 'No email',
             ];
