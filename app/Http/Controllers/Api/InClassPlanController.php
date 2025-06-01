@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\InClassPlan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\ClassSubject;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
 
@@ -23,13 +24,15 @@ class InClassPlanController extends Controller
             ->where('student_id', $student->user_id)
             ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $plans
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'data' => $plans
+    ]);
+}
 
-    // Thêm in class kế hoạch mới cho subject
+
+
+    // Thêm kế hoạch mới cho subject
     public function store(Request $request, $subjectId)
     {
         $user = Auth::guard('sanctum')->user();

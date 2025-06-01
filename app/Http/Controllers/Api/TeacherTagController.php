@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\TeacherTag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
+use App\Models\User;
+use Illuminate\Support\Facades\Notification as FacadesNotification;
 
 
 class TeacherTagController extends Controller
@@ -73,6 +76,17 @@ class TeacherTagController extends Controller
             'created_at' => $tag->created_at,
             'updated_at' => $tag->updated_at,
         ], 201);
+
+        Notification::create([
+    'sender_id' => Auth::id(),
+    'receiver_id' => $request->teacher_id,
+    'notification_type' => 'teacher_tagged',
+    'related_entity_type' => $request->entity_type,
+    'related_entity_id' => $request->entity_id,
+    'title' => '📌 Bạn được tag bởi học sinh',
+    'message' => $request->message,
+    'priority' => 'medium',
+]);
     }
 
     public function show($id)

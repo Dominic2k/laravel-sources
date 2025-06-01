@@ -92,9 +92,9 @@ class ClassController extends Controller
             return optional($student->user)->role === 'student';
         })->map(function ($student) {
             return [
-                'student_id' => $student->user->id,
-                'full_name' => $student->user->full_name ?? 'No name',
-                'email' => $student->user->email ?? 'No email',
+                'student_id' => $student->user_id,
+                'full_name' => optional($student->user)->full_name ?? 'No name',
+                'email' => optional($student->user)->email ?? 'No email',
             ];
         })->values(); // Reset chỉ số mảng
 

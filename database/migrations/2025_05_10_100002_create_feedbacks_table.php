@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('feedbacks', function (Blueprint $table) {
@@ -18,18 +15,12 @@ return new class extends Migration
             $table->unsignedBigInteger('teacher_id');
             $table->text('content');
             $table->timestamp('created_at')->useCurrent();
-            
-            // Thêm ràng buộc khóa ngoại
-            $table->foreign('teacher_id')->references('user_id')->on('teachers')->onDelete('cascade');
-            
-            // Thêm index cho cặp entity_type và entity_id
+
+            $table->foreign('teacher_id')->references('id')->on('users')->onDelete('cascade'); // giả sử giáo viên là user trong bảng users
             $table->index(['entity_type', 'entity_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('feedbacks');
