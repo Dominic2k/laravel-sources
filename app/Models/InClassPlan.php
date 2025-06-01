@@ -19,6 +19,7 @@ class InClassPlan extends Model
         'improvement_plan',
         'problem_solved',
         'additional_notes',
+        'student_id'
     ];
 
     protected $casts = [

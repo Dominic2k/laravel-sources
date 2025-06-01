@@ -19,7 +19,8 @@ class SelfStudyPlan extends Model
         'concentration',
         'plan_follow',
         'evaluation',
-        'reinforcing'
+        'reinforcing',
+        'student_id'
     ];
 
     public function class()

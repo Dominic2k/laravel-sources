@@ -12,23 +12,17 @@ class Teacher extends Model
     protected $primaryKey = 'user_id';
     public $incrementing = false;
     public $timestamps = false;
-    
     protected $fillable = [
-        'user_id', 'specialization', 'join_date', 'bio'
+        'user_id', 'specialization', 'bio', 'join_date'
     ];
     
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
     
     public function subjects()
     {
         return $this->belongsToMany(Subject::class, 'class_subjects', 'teacher_id', 'subject_id');
-    }
-    
-    public function classes()
-    {
-        return $this->belongsToMany(Classes::class, 'class_subjects', 'teacher_id', 'class_id');
     }
 }

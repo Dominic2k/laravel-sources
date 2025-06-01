@@ -37,15 +37,12 @@ class SelfStudyPlanController extends Controller
      */
     public function store(Request $request, $subjectId)
     {
+        $user = Auth::guard('sanctum')->user();
+        $student = Student::where('user_id', $user->id)->first();
 
-    $user = Auth::guard('sanctum')->user();
-    $student = Student::where('user_id', $user->id)->first();
-
-    if (!$student) {
+        if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
-    // Kiểm tra subject có tồn tại không
-    
 
         $validated = $request->validate([
             'date' => 'required|date',
@@ -60,32 +57,37 @@ class SelfStudyPlanController extends Controller
         ]);
 
         $validated['subject_id'] = $subjectId;
+        $validated['student_id'] = $student->user_id;
 
         $plan = SelfStudyPlan::create($validated);
 
         return response()->json(['message' => 'Saved successfully', 'data' => $plan], 201);
     }
 
-
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, string $id)
+    public function show(Request $request, $subjectId, $id)
     {
-        $student = Student::where('user_id', $request->user()->id)->first();
+        $user = Auth::guard('sanctum')->user();
+        $student = Student::where('user_id', $user->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
         $plan = SelfStudyPlan::where('id', $id)
-            ->where('student_id', $student->id)
+            ->where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
             ->first();
 
         if (!$plan) {
             return response()->json(['error' => 'Plan not found'], 404);
         }
 
-        return response()->json($plan);
+        return response()->json([
+            'success' => true,
+            'data' => $plan
+        ]);
     }
 
     /**
@@ -114,6 +116,7 @@ class SelfStudyPlanController extends Controller
 
         $plan = SelfStudyPlan::where('id', $id)
             ->where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
             ->firstOrFail();
 
         if (!$plan) {
@@ -142,6 +145,7 @@ class SelfStudyPlanController extends Controller
 
         $plan = SelfStudyPlan::where('id', $id)
             ->where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
             ->first();
 
         if (!$plan) {
@@ -162,15 +166,14 @@ class SelfStudyPlanController extends Controller
     public function getPlansBySubject($subjectId)
     {
         $user = Auth::guard('sanctum')->user();
-
-        // Nếu cần xác nhận là student vẫn giữ đoạn sau
         $student = Student::where('user_id', $user->id)->first();
         if (!$student) {
             return response()->json(['error' => 'Student not found'], 404);
         }
 
-        // Vì bảng không có student_id nên không thể lọc theo đó
-        $plans = SelfStudyPlan::where('subject_id', $subjectId)->get();
+        $plans = SelfStudyPlan::where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
+            ->get();
 
         return response()->json([
             'success' => true,

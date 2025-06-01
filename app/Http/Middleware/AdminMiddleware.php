@@ -25,7 +25,6 @@ class AdminMiddleware
                 'message' => 'Unauthorized. Admin access required.'
             ], 403);
         }
-        
         return $next($request);
     }
 }

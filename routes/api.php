@@ -18,9 +18,10 @@ use App\Http\Controllers\Api\{
     TeacherTagController,
     StudentSubjectController,
     DeadlineController,
-    NotificationController,
+    TeacherManagementController
     FeedbackController
 };
+use App\Http\Controllers\Api\Admin\SubjectManagementController;
 use App\Models\InClassPlan;
 use Illuminate\Support\Facades\Auth;
 
@@ -146,6 +147,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // --- Admin Routes - Dat ---
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Dashboard Statistics
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/statistics', [App\Http\Controllers\Api\Admin\DashboardController::class, 'getStatistics']);
+        }); 
     // Quản lý sinh viên
     Route::apiResource('students', App\Http\Controllers\Api\Admin\StudentManagementController::class);
     
@@ -159,6 +164,18 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     
     // Tạo nhiều sinh viên cho lớp
     Route::post('classes/{class}/create-students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'createStudentsForClass']);
+
+    // Teacher Management Routes
+    Route::get('/teachers', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'index']);
+    Route::post('/teachers', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'store']);
+    Route::get('/teachers/{id}', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'show']);
+    Route::put('/teachers/{id}', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'update']);
+    Route::delete('/teachers/{id}', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'destroy']);
+
+    Route::apiResource('subjects', SubjectManagementController::class);
+});
+
+Route::middleware('auth:sanctum')->get('/admin/activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
 });
     // Route::get('/student/profile', function (Request $request) {
     //     $user = Auth::guard('sanctum')->user();

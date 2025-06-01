@@ -13,17 +13,16 @@ class InClassPlanController extends Controller
 {
     // Lấy danh sách kế hoạch theo subject
     public function indexBySubject($subjectId)
-{
-    $user = Auth::guard('sanctum')->user();
+    {
+        $user = Auth::guard('sanctum')->user();
+        $student = Student::where('user_id', $user->id)->first();
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
 
-    // Nếu cần xác nhận là student vẫn giữ đoạn sau
-    $student = Student::where('user_id', $user->id)->first();
-    if (!$student) {
-        return response()->json(['error' => 'Student not found'], 404);
-    }
-
-    // Vì bảng không có student_id nên không thể lọc theo đó
-    $plans = InClassPlan::where('subject_id', $subjectId)->get();
+        $plans = InClassPlan::where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
+            ->get();
 
     return response()->json([
         'success' => true,
@@ -50,10 +49,12 @@ class InClassPlanController extends Controller
             'self_assessment' => 'required|in:1,2,3',
             'difficulties_faced' => 'nullable|string',
             'improvement_plan' => 'nullable|string',
-            'problem_solved' => 'required|boolean'
+            'problem_solved' => 'required|boolean',
+            'additional_notes' => 'nullable|string'
         ]);
 
         $validated['subject_id'] = $subjectId;
+        $validated['student_id'] = $student->user_id;
 
         $plan = InClassPlan::create($validated);
 
@@ -74,7 +75,7 @@ class InClassPlanController extends Controller
         }
 
         $plan = InClassPlan::where('id', $id)
-            ->where('student_id', $student->id)
+            ->where('student_id', $student->user_id)
             ->where('subject_id', $subjectId)
             ->firstOrFail();
 
@@ -86,67 +87,62 @@ class InClassPlanController extends Controller
 
     // Cập nhật kế hoạch
     public function update(Request $request, $subjectId, $id)
-{
-    $user = Auth::guard('sanctum')->user();
-    $student = Student::where('user_id', $user->id)->first();
+    {
+        $user = Auth::guard('sanctum')->user();
+        $student = Student::where('user_id', $user->id)->first();
 
-    if (!$student) {
-        return response()->json(['error' => 'Student not found'], 404);
+        if (!$student) {
+            return response()->json(['error' => 'Student not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'skills_module' => 'required|string|max:255',
+            'lesson_summary' => 'required|string',
+            'self_assessment' => 'required|in:1,2,3',
+            'difficulties_faced' => 'nullable|string',
+            'improvement_plan' => 'nullable|string',
+            'problem_solved' => 'required|boolean',
+            'additional_notes' => 'nullable|string'
+        ]);
+
+        $plan = InClassPlan::where('id', $id)
+            ->where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
+            ->firstOrFail();
+
+        $plan->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $plan
+        ]);
     }
-
-
-    $validated = $request->validate([
-        'date' => 'required|date',
-        'skills_module' => 'required|string|max:255',
-        'lesson_summary' => 'required|string',
-        'self_assessment' => 'required|in:1,2,3',
-        'difficulties_faced' => 'nullable|string',
-        'improvement_plan' => 'nullable|string',
-        'problem_solved' => 'required|boolean',
-        'additional_notes' => 'nullable|string'
-    ]);
-
-    $plan = InClassPlan::where('id', $id)
-        ->where('subject_id', $subjectId)
-        ->firstOrFail();
-
-    $plan->update($validated);
-
-    if (!$plan) {
-            return response()->json(['error' => 'Plan not found'], 404);
-    }
-
-    return response()->json([
-        'success' => true,
-        'data' => $plan
-    ]);
-}
-
 
     // Xoá kế hoạch
     public function destroy($subjectId, $id)
-{
-    $user = Auth::guard('sanctum')->user();
+    {
+        $user = Auth::guard('sanctum')->user();
+        $student = Student::where('user_id', $user->id)->first();
+        
+        if (!$student) {
+            return response()->json(['success' => false, 'message' => 'Student not found'], 404);
+        }
 
-    $student = Student::where('user_id', $user->id)->first();
-    if (!$student) {
-        return response()->json(['success' => false, 'message' => 'Student not found'], 404);
+        $plan = InClassPlan::where('id', $id)
+            ->where('subject_id', $subjectId)
+            ->where('student_id', $student->user_id)
+            ->first();
+
+        if (!$plan) {
+            return response()->json(['success' => false, 'message' => 'Plan not found or unauthorized'], 404);
+        }
+
+        $plan->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'In-class plan deleted successfully.'
+        ]);
     }
-
-    $plan = InClassPlan::where('id', $id)
-        ->where('subject_id', $subjectId)
-        ->first();
-
-    if (!$plan) {
-        return response()->json(['success' => false, 'message' => 'Plan not found or unauthorized'], 404);
-    }
-
-    $plan->delete();
-
-    return response()->json([
-        'success' => true,
-        'message' => 'In-class plan deleted successfully.'
-    ]);
-}
-
 }

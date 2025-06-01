@@ -38,9 +38,10 @@ class StudentManagementController extends Controller
             'student_code' => 'required|string|unique:students',
             'admission_date' => 'required|date',
             'current_semester' => 'required|integer|min:1|max:6',
-            'class_id' => 'nullable|exists:classes,id' ,
+            'class_id' => 'nullable|exists:classes,id',
             'last_login' => 'nullable|date',
-            'birthday' => 'nullable|date'
+            'birthday' => 'nullable|date',
+            'role' => 'required|in:student,teacher,admin'
         ]);
 
         DB::beginTransaction();
@@ -50,7 +51,7 @@ class StudentManagementController extends Controller
                 'full_name' => $validated['full_name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'role' => 'student', 
+                'role' => $validated['role'], // Sử dụng role từ request
                 'birthday' => $validated['birthday'],
                 'last_login' => $validated['last_login']
             ]);
@@ -67,7 +68,7 @@ class StudentManagementController extends Controller
             if (isset($validated['class_id'])) {
                 ClassStudent::create([
                     'class_id' => $validated['class_id'],
-                    'student_id' => $student->user_id // Sử dụng user_id vì đó là primary key của bảng students
+                    'student_id' => $student->user_id
                 ]);
             }
 
@@ -144,7 +145,8 @@ class StudentManagementController extends Controller
             ],
             'password' => 'sometimes|string|min:6',
             'admission_date' => 'sometimes|date',
-            'current_semester' => 'sometimes|integer|min:1|max:6'
+            'current_semester' => 'sometimes|integer|min:1|max:6',
+            'role' => 'sometimes|in:student,teacher,admin'
         ]);
 
         DB::beginTransaction();
@@ -158,6 +160,9 @@ class StudentManagementController extends Controller
             }
             if (isset($validated['password'])) {
                 $user->password = Hash::make($validated['password']);
+            }
+            if (isset($validated['role'])) {
+                $user->role = $validated['role'];
             }
             $user->save();
 
@@ -193,27 +198,24 @@ class StudentManagementController extends Controller
     public function destroy($id)
     {
         $student = Student::findOrFail($id);
-        $userId = $student->user_id;
-
-        DB::beginTransaction();
+        
         try {
-            // Xóa student trước
-            $student->delete();
+            DB::beginTransaction();
             
-            // Xóa user sau
-            User::destroy($userId);
+            // Delete the associated user (this will cascade delete the student record)
+            $student->user->delete();
             
             DB::commit();
             
             return response()->json([
                 'success' => true,
-                'message' => 'Student account deleted successfully'
+                'message' => 'Student deleted successfully'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete student account',
+                'message' => 'Failed to delete student',
                 'error' => $e->getMessage()
             ], 500);
         }

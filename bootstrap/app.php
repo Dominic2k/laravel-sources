@@ -14,12 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'student-account' => App\Http\Middleware\RoleMiddleware::class.":student",
-            'teacher-account' => App\Http\Middleware\RoleMiddleware::class.":student",
-            'admin-account' => App\Http\Middleware\RoleMiddleware::class.":student",
+            'teacher-account' => App\Http\Middleware\RoleMiddleware::class.":teacher",
+            'admin-account' => App\Http\Middleware\RoleMiddleware::class.":admin",
             "logout" => App\Http\Middleware\RoleMiddleware::class.":",
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
-            //
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
