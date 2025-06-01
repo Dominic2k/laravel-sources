@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('teachers', function (Blueprint $table) {
             $table->unsignedBigInteger('user_id')->primary();
-            $table->string('specialization');
+            $table->string('specialization')->nullable();
             $table->date('join_date');
             $table->text('bio')->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

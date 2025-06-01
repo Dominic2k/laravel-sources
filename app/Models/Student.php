@@ -14,7 +14,7 @@ class Student extends Model
     public $timestamps = false;
     
     protected $fillable = [
-        'user_id', 'student_code', 'admission_date', 'current_semester'
+        'user_id', 'student_code', 'admission_date', 'current_semester', 'role', 'last_login', 'birthday', 'full_name', 'email', 'password'
     ];
     
     public function user()
