@@ -10,7 +10,6 @@ class InClassPlan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'student_id',
         'subject_id',
         'date',
         'skills_module',
@@ -36,6 +35,11 @@ class InClassPlan extends Model
     public function subject()
     {
         return $this->belongsTo(InClassPlan::class);
+    }
+
+    public function deadlines()
+    {
+        return $this->morphMany(\App\Models\Deadline::class, 'target');
     }
 
 }

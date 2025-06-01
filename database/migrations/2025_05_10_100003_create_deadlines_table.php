@@ -13,21 +13,15 @@ return new class extends Migration
     {
         Schema::create('deadlines', function (Blueprint $table) {
             $table->id();
-            $table->enum('target_type', ['goal', 'self_study_plan', 'in_class_plan', 'journal_entry', 'achievement']);
-            $table->unsignedBigInteger('target_id');
             $table->unsignedBigInteger('set_by');
             $table->string('title', 255);
             $table->text('description');
-            $table->timestamp('due_date');
-            $table->json('reminder_settings')->nullable();
-            $table->enum('status', ['pending', 'completed', 'missed', 'extended']);
+            $table->dateTime('due_date');
             $table->timestamps();
             
             // Thêm ràng buộc khóa ngoại
             $table->foreign('set_by')->references('id')->on('users')->onDelete('cascade');
             
-            // Thêm index cho cặp target_type và target_id
-            $table->index(['target_type', 'target_id']);
         });
     }
 

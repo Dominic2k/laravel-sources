@@ -6,19 +6,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\Teacher;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use App\Models\ClassStudent;
 
-class StudentManagementController extends Controller
+class TeacherManagementController extends Controller
 {
     /**
      * Lấy danh sách tất cả sinh viên
      */
     public function index()
     {
-        $students = Student::with('user')->get();
+        $students = Teacher::with('user')->get();
         
         return response()->json([
             'success' => true,
@@ -96,36 +97,15 @@ class StudentManagementController extends Controller
     /**
      * Hiển thị thông tin chi tiết của một sinh viên
      */
-    // public function show($id)
-    // {
-    //     $student = Student::with('user')->findOrFail($id);
-        
-    //     return response()->json([
-    //         'success' => true,
-    //         'data' => $student
-    //     ]);
-    // }
-
-
     public function show($id)
     {
         $student = Student::with('user')->findOrFail($id);
-
-        // Lấy class_id mới nhất của student từ bảng trung gian class_students
-        $classId = ClassStudent::where('student_id', $student->user_id)
-                            ->latest('created_at')
-                            ->value('class_id');
-
-        // Thêm class_id vào kết quả trả về (không ảnh hưởng DB)
-        $student->setAttribute('class_id', $classId);
-
+        
         return response()->json([
             'success' => true,
             'data' => $student
         ]);
     }
-
-
 
     /**
      * Cập nhật thông tin sinh viên
@@ -143,6 +123,11 @@ class StudentManagementController extends Controller
                 Rule::unique('users')->ignore($user->id)
             ],
             'password' => 'sometimes|string|min:6',
+            'student_code' => [
+                'sometimes',
+                'string',
+                Rule::unique('students')->ignore($student->id)
+            ],
             'admission_date' => 'sometimes|date',
             'current_semester' => 'sometimes|integer|min:1|max:6'
         ]);
@@ -162,6 +147,9 @@ class StudentManagementController extends Controller
             $user->save();
 
             // Cập nhật thông tin student
+            if (isset($validated['student_code'])) {
+                $student->student_code = $validated['student_code'];
+            }
             if (isset($validated['admission_date'])) {
                 $student->admission_date = $validated['admission_date'];
             }
@@ -219,4 +207,3 @@ class StudentManagementController extends Controller
         }
     }
 }
-

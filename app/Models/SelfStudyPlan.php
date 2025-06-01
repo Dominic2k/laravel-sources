@@ -10,8 +10,8 @@ class SelfStudyPlan extends Model
     use HasFactory;
 
     protected $fillable = [
+        'subject_id',
         'date',
-        'module',
         'lesson',
         'time',
         'resources',
@@ -19,8 +19,7 @@ class SelfStudyPlan extends Model
         'concentration',
         'plan_follow',
         'evaluation',
-        'reinforcing',
-        'notes'
+        'reinforcing'
     ];
 
     public function class()
@@ -42,4 +41,10 @@ class SelfStudyPlan extends Model
     {
         return $this->belongsTo(Subject::class,'subject_id');
     }
+
+    public function deadlines()
+    {
+        return $this->morphMany(\App\Models\Deadline::class, 'target');
+    }
+
 }
