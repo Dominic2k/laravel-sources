@@ -19,6 +19,7 @@ class InClassPlan extends Model
         'improvement_plan',
         'problem_solved',
         'additional_notes',
+        'student_id'
     ];
 
     protected $casts = [
@@ -35,6 +36,11 @@ class InClassPlan extends Model
     public function subject()
     {
         return $this->belongsTo(InClassPlan::class);
+    }
+
+    public function deadlines()
+    {
+        return $this->morphMany(\App\Models\Deadline::class, 'target');
     }
 
 }

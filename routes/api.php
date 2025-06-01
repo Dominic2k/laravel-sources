@@ -16,8 +16,11 @@ use App\Http\Controllers\Api\{
     AchievementController,
     AuthController,
     TeacherTagController,
-    StudentSubjectController
+    StudentSubjectController,
+    DeadlineController,
+    TeacherManagementController
 };
+use App\Http\Controllers\Api\Admin\SubjectManagementController;
 use Illuminate\Support\Facades\Auth;
 
 // --- Authenticated routes - Binh ---
@@ -86,6 +89,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // --- Admin Routes - Dat ---
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Dashboard Statistics
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/statistics', [App\Http\Controllers\Api\Admin\DashboardController::class, 'getStatistics']);
+        }); 
     // Quản lý sinh viên
     Route::apiResource('students', App\Http\Controllers\Api\Admin\StudentManagementController::class);
     
@@ -99,10 +106,34 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     
     // Tạo nhiều sinh viên cho lớp
     Route::post('classes/{class}/create-students', [App\Http\Controllers\Api\Admin\ClassManagementController::class, 'createStudentsForClass']);
+
+    // Teacher Management Routes
+    Route::get('/teachers', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'index']);
+    Route::post('/teachers', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'store']);
+    Route::get('/teachers/{id}', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'show']);
+    Route::put('/teachers/{id}', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'update']);
+    Route::delete('/teachers/{id}', [\App\Http\Controllers\Api\Admin\TeacherManagementController::class, 'destroy']);
+
+    Route::apiResource('subjects', SubjectManagementController::class);
 });
+
+Route::middleware('auth:sanctum')->get('/admin/activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
 
 // ---Class of Teacher - Kim---
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/teacher/{teacherId}/classes', [TeacherController::class, 'getClasses']);
     Route::get('/classes/{classId}/students', [ClassController::class, 'getStudents']);
 });
+
+
+// --Teacher set deadline--
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/deadlines', [DeadlineController::class, 'index']);
+    Route::post('/classes/{classId}/deadlines', [DeadlineController::class, 'store']);
+    Route::get('/deadlines/{id}', [DeadlineController::class, 'show']);
+    Route::put('/deadlines/{id}', [DeadlineController::class, 'update']);
+    Route::delete('/deadlines/{id}', [DeadlineController::class, 'destroy']);
+});
+
+// --Get name of teacher in sidebar UI teacher--
+Route::middleware(['auth:sanctum'])->get('/teacher/{id}', [TeacherController::class, 'show']);

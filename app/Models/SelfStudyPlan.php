@@ -19,7 +19,8 @@ class SelfStudyPlan extends Model
         'concentration',
         'plan_follow',
         'evaluation',
-        'reinforcing'
+        'reinforcing',
+        'student_id'
     ];
 
     public function class()
@@ -41,4 +42,10 @@ class SelfStudyPlan extends Model
     {
         return $this->belongsTo(Subject::class,'subject_id');
     }
+
+    public function deadlines()
+    {
+        return $this->morphMany(\App\Models\Deadline::class, 'target');
+    }
+
 }
