@@ -49,6 +49,13 @@ public function selfStudyPlans()
     return $this->hasMany(SelfStudyPlan::class, 'student_id');
 }
 
+//Binh modify
+public function submissions()
+{
+    return $this->hasMany(\App\Models\Submission::class, 'student_id');
+}
+//-----
+
 }
 
 

@@ -19,7 +19,8 @@ use App\Http\Controllers\Api\{
     StudentSubjectController,
     DeadlineController,
     TeacherManagementController,
-    FeedbackController
+    FeedbackController,
+    SubmissionController
 };
 use App\Http\Controllers\Api\Admin\SubjectManagementController;
 use App\Models\InClassPlan;
@@ -171,5 +172,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 // teacher get info deadline
-Route::get('/teacher/dashboard/deadline', [DeadlineController::class, 'teacherDashboard'])->middleware('teacher-account');
-
+Route::get('/teacher/dashboard/deadline', [SubmissionController::Class, 'dasboardByTeeacher'])->middleware('teacher-account');
