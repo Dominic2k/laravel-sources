@@ -170,7 +170,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-
-
-
+// teacher get info deadline
+Route::get('/teacher/dashboard/deadline', [DeadlineController::class, 'teacherDashboard'])->middleware('teacher-account');
 

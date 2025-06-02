@@ -109,4 +109,20 @@ class DeadlineController extends Controller
 
         return response()->json(['message' => 'Deadline deleted successfully.']);
     }
+
+    //my class deadline
+    public function teacherDashboard () {
+        $teacher_id = Auth::guard("sanctum")->user()->id;
+        $deadlines = Deadline::where("set_by", $teacher_id)->get();
+        // $class = ClassStudent::where("student_id", $deadline->ta)
+
+// foreach ($deadlines as $deadline) {
+//     echo $deadline->student->classModel->name; // tên lớp
+// }
+
+        if (!$deadlines) {
+            return response()->json(["error" => "Nothing"], 404);
+        }
+        return response()->json(["data" => $deadlines]);
+    }
 }
