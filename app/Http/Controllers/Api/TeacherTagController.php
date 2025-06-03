@@ -77,16 +77,16 @@ class TeacherTagController extends Controller
             'updated_at' => $tag->updated_at,
         ], 201);
 
-        Notification::create([
-    'sender_id' => Auth::id(),
-    'receiver_id' => $request->teacher_id,
-    'notification_type' => 'teacher_tagged',
-    'related_entity_type' => $request->entity_type,
-    'related_entity_id' => $request->entity_id,
-    'title' => '📌 Bạn được tag bởi học sinh',
-    'message' => $request->message,
-    'priority' => 'medium',
-]);
+        // Notification::create([
+        //     'sender_id' => Auth::id(),
+        //     'receiver_id' => $request->teacher_id,
+        //     'notification_type' => 'teacher_tagged',
+        //     'related_entity_type' => $request->entity_type,
+        //     'related_entity_id' => $request->entity_id,
+        //     'title' => '📌 Bạn được tag bởi học sinh',
+        //     'message' => $request->message,
+        //     'priority' => 'medium',
+        //]);
     }
 
     public function show($id)
@@ -130,5 +130,16 @@ class TeacherTagController extends Controller
         $tag->save();
 
         return response()->json(['message' => 'Resolved']);
+    }
+
+    // Lấy danh sách tag của giáo viên đang đăng nhập
+    public function myTags(Request $request)
+    {
+        $tags = TeacherTag::with('teacherUser:id,full_name')
+            ->where('teacher_id', Auth::guard("sanctum")->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($tags);
     }
 }

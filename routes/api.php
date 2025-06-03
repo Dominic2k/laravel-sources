@@ -42,10 +42,11 @@ Route::prefix('public')->group(function () {
 });
 
 // --- Teacher tag: Ơn ---
+
+Route::get('teacher-tags/mytags', [TeacherTagController::class, 'myTags']);
 Route::apiResource('teacher-tags', TeacherTagController::class);    
 
 Route::middleware('auth:sanctum')->group(function () {
-
     Route::prefix('student')->group(function () {
         Route::get('/subjects', [StudentSubjectController::class, 'index']);
         Route::get('/subjects/{subjectId}/detail', [StudentSubjectController::class, 'show']);
@@ -82,8 +83,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('self-study-plans/{id}', [SelfStudyPlanController::class, 'destroy']);
     });
 
-// --- Achievements - Ngoc ---
-    Route::apiResource('achievements', AchievementController::class);
+// --- Achievements ---
+Route::middleware('auth:sanctum')->prefix('achievements')->group(function () {
+    Route::get('/', [AchievementController::class, 'index']);
+    Route::post('/', [AchievementController::class, 'store']);
+    Route::get('/{id}', [AchievementController::class, 'show']);
+    Route::put('/{id}', [AchievementController::class, 'update']);
+    Route::delete('/{id}', [AchievementController::class, 'destroy']);
+    
+    // Additional routes
+    Route::get('/student/{studentId}', [AchievementController::class, 'getByStudent']);
+    Route::get('/class-subject/{classSubjectId}', [AchievementController::class, 'getByClassSubject']);
+    Route::get('/semester/{semester}', [AchievementController::class, 'getBySemester']);
+});
 
 // --- Student Subjects ---
     Route::get('/student/{student_id}/subjects', [StudentController::class, 'getSubjects']);
@@ -133,12 +145,6 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 Route::middleware('auth:sanctum')->get('/admin/activity-logs', [\App\Http\Controllers\Api\Admin\ActivityLogController::class, 'index']);
 
     
-Route::apiResource('achievements', AchievementController::class);
-
-    // --- Profile ---
-      
-// Route::apiResource('notifications', NotificationController::class);
-
 // ---Class of Teacher - Kim---
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/teacher/{teacherId}/classes', [TeacherController::class, 'getClasses']);
